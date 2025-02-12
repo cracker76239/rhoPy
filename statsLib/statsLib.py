@@ -97,6 +97,17 @@ class distributions:
         # The standard deviation of the probability distribution
         def stDev(p : Float, n: Integer):
             return((n * p * (1 - p)) ** 0.5
+    
+    # Describes the probability of taking z
+    class geomet:
+    
+        def mean(p: Float):
+            return(1/p)
+        
+        def stDev(p: Float):
+            return((1-p) / p)
+    
+        
 
 if __name__ == "__main__":
     print("running script:")
