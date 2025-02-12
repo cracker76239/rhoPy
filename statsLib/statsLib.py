@@ -15,13 +15,13 @@ def mean(inputList : list | tuple):
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the variance of the list.
 def variance(inputList: list | tuple, isSample: bool = False):
     tempVariance = 0
-    n = len(inputList)
+    inputSize = len(inputList)
     inputMean = mean(inputList)
 
     if not inputList:
          raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
     elif n == 1:
-        return 0
+        return 0 # The variance and standard deviation of a set containing one number is zero.
     else: 
         tempVariance = sum((x - inputMean) ** 2 for x in inputList)
 
@@ -33,6 +33,12 @@ def variance(inputList: list | tuple, isSample: bool = False):
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
 def stDev(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
+def stDev(inputList, isSample : bool = True):
+    return(variance(inputList, isSample) ** 0.5)
+
+# Returns the z-score of a number.
+def zScore(value, mean, stDev):
+    return((value - mean) / stDev)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
 def zScorify(inputList: list | tuple, index: float = None, sample: bool = False):
@@ -56,6 +62,54 @@ def sample(inputList: list | tuple, n: int, replacement: bool = True):
             j = randint(0,popSize - 1) # A random index j corresponding to the ordered index i. 
             tempList[i], tempList[j] = tempList[j], tempList[i] # Puts the jth element in the ith spot. Ends up with n random elements sampled without replacement.
         return(tempList[:n])
+        
+# Means and standard deviations of various distribution types.
+class distributions:
+
+# Mu is another way to write "the population mean"
+# Sigma is another way to write "the population standard deviation"
+
+    class sampling:
+        
+        # The sampling distribution of p-hat
+        class sampleProportion:
+    
+            # Mean of the sampling distribution of p-hat is equal to p.
+            
+            # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
+            def stDev(p: Float, n: Integer):
+                return(( (p * (1 - p)) / n) ** 0.5)
+            
+        # The sampling distribution of x-bar
+        class sampleMean:
+            
+            # Mean of the sampling distribution of x-bar is equal to the population mean.
+        
+            # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
+            def stDev(sigma: Float | Int, n: Integer):
+                return((sigma ** 0.5) / n)
+    
+    # Describes the probability of x successes given n attempts and p probability of success
+    class binom:
+        
+        # The mean of the probability distribution
+        def mean(p: Float, n: Integer):
+            return(n * p)
+            
+        # The standard deviation of the probability distribution
+        def stDev(p : Float, n: Integer):
+            return((n * p * (1 - p)) ** 0.5
+    
+    # Describes the probability of taking z
+    class geomet:
+    
+        def mean(p: Float):
+            return(1/p)
+        
+        def stDev(p: Float):
+            return((1-p) / p)
+    
+        
 
 if __name__ == "__main__":
     print("running script:")
