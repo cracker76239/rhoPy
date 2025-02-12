@@ -1,0 +1,28 @@
+[project]
+name = "statslib"
+version = "0.1.0"
+description = "A (currently) small Python library of statistics functions which are aimed to be more efficient and expansive compared to the default library."
+license = { file = "LICESE" }
+authors = [
+    {name = "Caleb",email = "136144800+cracker76239@users.noreply.github.com"}
+]
+readme = "README.md"
+keywords = [statistics, math]
+requires-python = ">=3.13"
+
+[project.urls]
+repositories = "https://github.com/cracker76239/statsLib"
+
+[project.scripts]
+my_package_cli = 'statsLib.console:run'
+
+
+dependencies = [
+    random
+    math
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

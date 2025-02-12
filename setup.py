@@ -1,4 +1,7 @@
-from setuptools import setup, find_packages
+import math
+import random
+from setuptools import setup, find_packages # type: ignore
+
 
 setup(
     name="statsLib",
