@@ -1,7 +1,8 @@
 from random import *
-from statsLib import *
-from pytest_lazyfixture import * # type: ignore
+from pytest import *
 
 # Some tests.
+
+assert 
 
 
