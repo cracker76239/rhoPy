@@ -21,7 +21,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
     if not inputList:
          raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
     elif n == 1:
-        return 0
+        return 0 # The variance and standard deviation of a set containing one number is zero.
     else: 
         tempVariance = sum((x - inputMean) ** 2 for x in inputList)
 
@@ -69,7 +69,8 @@ class distributions:
 
     class sampling:
         
-        class proportion:
+        # The sampling distribution of p-hat
+        class sampleProportion:
     
             # Mean of the sampling distribution of p-hat is equal to p.
             
@@ -77,12 +78,25 @@ class distributions:
             def stDev(p: Float, n: Integer):
                 return(( (p * (1 - p)) / n) ** 0.5)
             
-        class mean:
+        # The sampling distribution of x-bar
+        class sampleMean:
             
             # Mean of the sampling distribution of x-bar is equal to the population mean.
         
             # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
-            def stDev(mu: Float | Int, 
+            def stDev(sigma: Float | Int, n: Integer):
+                return((sigma ** 0.5) / n)
+    
+    # Describes the probability of x successes given n attempts and p probability of success
+    class binom:
+        
+        # The mean of the probability distribution
+        def mean(p: Float, n: Integer):
+            return(n * p)
+            
+        # The standard deviation of the probability distribution
+        def stDev(p : Float, n: Integer):
+            return((n * p * (1 - p)) ** 0.5
 
 if __name__ == "__main__":
     print("running script:")
