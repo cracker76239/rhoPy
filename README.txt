@@ -1,7 +1,7 @@
-Welcome to statsLib!
+Welcome to statsLib.
 
-This is my first project. I plan on making it continuous. Please DO NOT HESITATE to make suggestions to my code.
-I wrote the first 4 functions on the same day I learned to code in Python. Expect errors.
+This is my first project. I plan on making it continuous. Please do not hesitate to make suggestions to my code.
+I wrote the first 4 functions on the same day I learned to code in Python. Expect some errors.
 
 More detailed descriptions will be found wherever I put the documentation later.
 
