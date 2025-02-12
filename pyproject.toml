@@ -9,6 +9,8 @@ authors = [
     "Caleb 136144800+cracker76239@users.noreply.github.com"
 ]
 
+packages = [{ include = "statsLib" }]  
+
 [[tool.poetry.source]]
 name = "statsLib"
 url = "https://github.com/cracker76239/statsLib"

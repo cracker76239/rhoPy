@@ -31,7 +31,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
             return (tempVariance / n)    
     
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
-def stDev(inputList, isSample : bool = True):
+def stDev(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
