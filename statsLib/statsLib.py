@@ -1,5 +1,16 @@
-from random import * # type: ignore
-from math import * #type: ignore
+from random import *
+from math import *
+from typing import *
+
+probability = Annotated[float, lambda p: 0 <= p <= 1]
+
+def validateProbability(func):
+    # Validates that probabilities are between 0 and 1
+    def wrapper(p, *args, **kwargs):
+        if not (0 <= p <= 1):
+            raise ValueError("p must be between 0 and 1.")
+        return func(p, *args, **kwargs)
+    return wrapper
 
 # Input a list or tuple, return a mean.
 def mean(inputList : list | tuple):
@@ -15,7 +26,7 @@ def mean(inputList : list | tuple):
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the variance of the list.
 def variance(inputList: list | tuple, isSample: bool = False):
     tempVariance = 0
-    inputSize = len(inputList)
+    n = len(inputList)
     inputMean = mean(inputList)
 
     if not inputList:
@@ -26,7 +37,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
         tempVariance = sum((x - inputMean) ** 2 for x in inputList)
 
         if isSample == True:
-            return (tempVariance / (n - 1))
+            return (tempVariance / (n))
         else:
             return (tempVariance / n)    
     
@@ -41,7 +52,7 @@ def zScore(value, mean, stDev):
     return((value - mean) / stDev)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
-def zScorify(inputList: list | tuple, index: float = None, sample: bool = False):
+def zScorify(inputList: list | tuple, index: int = None, sample: bool = False):
     inputMean = mean(inputList)
     inputStDev = stDev(inputList, sample)
 
@@ -64,7 +75,7 @@ def sample(inputList: list | tuple, n: int, replacement: bool = True):
         return(tempList[:n])
         
 # Means and standard deviations of various distribution types.
-class distributions:
+class dists:
 
 # Mu is another way to write "the population mean"
 # Sigma is another way to write "the population standard deviation"
@@ -72,44 +83,64 @@ class distributions:
     class sampling:
         
         # The sampling distribution of p-hat
-        class sampleProportion:
+        class prop:
     
             # Mean of the sampling distribution of p-hat is equal to p.
             
             # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
-            def stDev(p: Float, n: Integer):
+            # Here, probability is used do ensure that the proportion is between 0 and 1. It is not an actual probability.
+            @staticmethod
+            @validateProbability
+            def stDev(p: probability, n: int):
                 return(( (p * (1 - p)) / n) ** 0.5)
             
         # The sampling distribution of x-bar
-        class sampleMean:
+        class mean:
             
             # Mean of the sampling distribution of x-bar is equal to the population mean.
         
             # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
-            def stDev(sigma: Float | Int, n: Integer):
-                return((sigma ** 0.5) / n)
+            @staticmethod
+            def stDev(sigma: float | int, n: int):
+                return(sigma / (n ** 0.5))
     
-    # Describes the probability of x successes given n attempts and p probability of success
+    # Describes the probability of x successes given n attempts and p probability of success.
     class binom:
         
-        # The mean of the probability distribution
-        def mean(p: Float, n: Integer):
+        # The mean of the probability distribution, A.K.A. the expected amount of successes.
+        @staticmethod
+        @validateProbability
+        def mean(p: probability, n: int):
             return(n * p)
             
-        # The standard deviation of the probability distribution
-        def stDev(p : Float, n: Integer):
-            return((n * p * (1 - p)) ** 0.5
+        # The standard deviation of the probability distribution.
+        @staticmethod
+        @validateProbability
+        def stDev(p: probability, n: int):
+            return((n * p * (1 - p)) ** 0.5)
     
-    # Describes the probability of taking z
+    # Describes the probability of taking x amount of attempts to get a success for p probability of success.
     class geomet:
-    
-        def mean(p: Float):
-            return(1/p)
         
-        def stDev(p: Float):
-            return((1-p) / p)
-    
+        # The expected amount of attempts for a success.
+        @staticmethod
+        @validateProbability
+        def mean(p: probability):
+            if p == 0:
+                raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
+            else:
+                return(1/p)
         
+        # The average distance from
+        @staticmethod
+        @validateProbability
+        def stDev(p: probability):
+            if p == 0:
+                raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
+            else:
+                return(((1-p) ** 0.5) / p)
 
 if __name__ == "__main__":
     print("running script:")
+
+    print(dists.binom.stDev(0.5,5))
