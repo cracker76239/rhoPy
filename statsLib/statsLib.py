@@ -15,7 +15,7 @@ def mean(inputList : list | tuple):
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the variance of the list.
 def variance(inputList: list | tuple, isSample: bool = False):
     tempVariance = 0
-    n = len(inputList)
+    inputSize = len(inputList)
     inputMean = mean(inputList)
 
     if not inputList:
@@ -32,7 +32,11 @@ def variance(inputList: list | tuple, isSample: bool = False):
     
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
 def stDev(inputList, isSample : bool = True):
-        return(variance(inputList, isSample) ** 0.5)
+    return(variance(inputList, isSample) ** 0.5)
+
+# Returns the z-score of a number.
+def zScore(value, mean, stDev):
+    return((value - mean) / stDev)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
 def zScorify(inputList: list | tuple, index: float = None, sample: bool = False):
@@ -56,6 +60,29 @@ def sample(inputList: list | tuple, n: int, replacement: bool = True):
             j = randint(0,popSize - 1) # A random index j corresponding to the ordered index i. 
             tempList[i], tempList[j] = tempList[j], tempList[i] # Puts the jth element in the ith spot. Ends up with n random elements sampled without replacement.
         return(tempList[:n])
+        
+# Means and standard deviations of various distribution types.
+class distributions:
+
+# Mu is another way to write "the population mean"
+# Sigma is another way to write "the population standard deviation"
+
+    class sampling:
+        
+        class proportion:
+    
+            # Mean of the sampling distribution of p-hat is equal to p.
+            
+            # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
+            def stDev(p: Float, n: Integer):
+                return(( (p * (1 - p)) / n) ** 0.5)
+            
+        class mean:
+            
+            # Mean of the sampling distribution of x-bar is equal to the population mean.
+        
+            # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
+            def stDev(mu: Float | Int, 
 
 if __name__ == "__main__":
     print("running script:")
