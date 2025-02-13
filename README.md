@@ -1,4 +1,4 @@
-Welcome to parametric.
+Welcome to rhoPy.
 
 This is my first project. I plan on making it continuous. Please do not hesitate to make suggestions to my code.
 I wrote the first 4 functions on the same day I learned to code in Python. Expect some errors.
