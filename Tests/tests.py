@@ -1,9 +1,9 @@
 import sys
-sys.path.append('./statsLib')
+sys.path.append('C:/Users/caleb/Documents/GitHub/rhoPy')
 
 from random import *
 import pytest # type: ignore
-from parametric import * # type: ignore
+from rhoPy.rho import * # type: ignore
 
 # Some tests.
 
@@ -80,6 +80,8 @@ def testGeometStDev():
 def testProbabilityValidation():
     with pytest.raises(ValueError):
         dists.geomet.mean(69)
+
+
 
 
         
