@@ -3,7 +3,7 @@ sys.path.append('./statsLib')
 
 from random import *
 import pytest # type: ignore
-from statsLib import * # type: ignore
+from parametric import * # type: ignore
 
 # Some tests.
 
