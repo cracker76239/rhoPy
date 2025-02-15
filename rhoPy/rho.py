@@ -1,8 +1,23 @@
 from random import *
 from math import *
-from typing import *
+from typing import Annotated
 
 probability = Annotated[float, lambda p: 0 <= p <= 1]
+
+# Quickselect algorithm for median functions or others which require sorted lists.
+def quickselect(inputList, k):
+    pivot = random.choice(inputList)
+    
+    lows = [x for x in inputList if x < pivot]
+    highs = [x for x in inputList if x > pivot]
+    pivots = [x for x in inputList if x == pivot]
+    
+    if k < len(lows):
+        return quickselect(lows, k)
+    elif k < len(lows) + len(pivots):
+        return pivots[0]
+    else:
+        return quickselect(highs, k - len(lows) - len(pivots))
 
 def validateProbability(func):
     # Validates that probabilities are between 0 and 1.
@@ -15,7 +30,8 @@ def validateProbability(func):
 
 # Input a set of numbers, return a mean.
 # If a set of weights is input, it will return the mean based on those weights.
-def mean(inputList : list | tuple, inputWeights: list | tuple = None):
+@validateProbability
+def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
     elif (not all(isinstance(x, (int, float)) for x in inputList) or (any(isnan(x) or isinf(x) for x in inputList))):
@@ -23,21 +39,27 @@ def mean(inputList : list | tuple, inputWeights: list | tuple = None):
     elif inputWeights == None:
         return sum(inputList) / len(inputList)
     else:
-        # Seperate "if" function for readability
-        if not all(0 <= x <= 1 for x in inputWeights):
-            raise ValueError("The weights for a mean must be probabilities.")
-        elif (sum(inputWeights) != 1):
-            raise ValueError("The weights for a set of values must sum to one.")
-        elif len(inputList) != len(inputWeights):
-            raise IndexError("The length of the both the input set and its weights must be equal.")
-        else:
-            return sum(inputList[i] * inputWeights[i] for i in range(len(inputList)))
-        
-from math import prod, isnan, isinf
+        if len(inputList) != len(inputWeights):
+            raise IndexError("The length of both the input set and weights must be equal.")
+        if not all(x >= 0 for x in inputWeights):
+            raise ValueError("Weights must be non-negative.")
+        total_weight = sum(inputWeights)
+        if total_weight == 0:
+            raise ZeroDivisionError("The sum of weights cannot be zero.")
+        return sum(inputList[i] * inputWeights[i] for i in range(len(inputList))) / total_weight
+
+def fmean(inputList : list | tuple):
+    if not inputList:
+        raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
+    elif (not all(isinstance(x, (int, float)) for x in inputList) or (any(isnan(x) or isinf(x) for x in inputList))):
+        raise ValueError("Must be a list of numerical and determinate values. A string, bool, NaN, etc. was input.")
+    else:
+        return float(sum(inputList)) / float(len(inputList))
 
 # Input a set of numbers, return a geometric mean.
 # If a set of weights is input, it will return the geometric mean based on those weights.
-def geometMean(inputList: list | tuple, inputWeights: list | tuple = None):
+@validateProbability
+def geometMean(inputList: list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the geometric mean of an empty set; division by zero.")
     elif not all(isinstance(x, (int, float)) and x > 0 for x in inputList):
@@ -46,9 +68,7 @@ def geometMean(inputList: list | tuple, inputWeights: list | tuple = None):
     if inputWeights == None:
         return prod(inputList) ** (1 / len(inputList))
     else:
-        if not all(0 <= x <= 1 for x in inputWeights):
-            raise ValueError("The weights for a mean must be probabilities.")
-        elif sum(inputWeights) != 1:
+        if sum(inputWeights) != 1:
             raise ValueError("The weights for a set of values must sum to one.")
         elif len(inputList) != len(inputWeights):
             raise IndexError("The length of both the input set and its weights must be equal.")
@@ -58,7 +78,8 @@ def geometMean(inputList: list | tuple, inputWeights: list | tuple = None):
 
 # Input a set of numbers, return a harmonic mean.
 # If a set of weights is input, it will return the harmonic mean based on those weights.
-def harmMean(inputList: list | tuple, inputWeights: list | tuple = None):
+@validateProbability
+def harmMean(inputList: list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the harmonic mean of an empty set; division by zero.")
     elif not all(isinstance(x, (int, float)) and x > 0 for x in inputList):
@@ -67,9 +88,8 @@ def harmMean(inputList: list | tuple, inputWeights: list | tuple = None):
     if inputWeights == None:
         return len(inputList) / sum(1 / x for x in inputList)
     else:
-        if not all(0 <= x <= 1 for x in inputWeights):
-            raise ValueError("The weights for a mean must be probabilities.")
-        elif sum(inputWeights) != 1:
+        
+        if sum(inputWeights) != 1:
             raise ValueError("The weights for a set of values must sum to one.")
         elif len(inputList) != len(inputWeights):
             raise IndexError("The length of both the input set and its weights must be equal.")
@@ -85,7 +105,8 @@ def variance(inputList: list | tuple, isSample: bool = False):
 
     if not inputList:
          raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
-    elif n == 1:
+
+    if n == 1:
         return 0 # The variance and standard deviation of a set containing one number is zero.
     else: 
         tempVariance = sum((x - inputMean) ** 2 for x in inputList)
@@ -127,6 +148,80 @@ def sample(inputList: list | tuple, n: int, replacement: bool = True):
             j = randint(0,popSize - 1) # A random index j corresponding to the ordered index i. 
             tempList[i], tempList[j] = tempList[j], tempList[i] # Puts the jth element in the ith spot. Ends up with n random elements sampled without replacement.
         return(tempList[:n])
+
+# Sorts a list (O(n log n)), and returns the median.
+def median(inputList: list | tuple):
+    sortedList = sorted(inputList)
+    length = len(inputList)
+
+    if length % 2 == 0:
+        mid = length // 2
+        return((sortedList[mid] + sortedList[mid-1]) / 2)
+
+    else:
+        return sortedList[length // 2]
+
+# Returns the median quickly using the quickselect algorithm.
+# Best case: O(n) Worst case: O(n^2)
+def quickmedian(inputList: list | tuple):
+    length = len(inputList)
+    if length % 2 == 0:
+        return quickselect(inputList, length // 2)
+    
+    else:
+        return((quickselect(inputList, length // 2 - 1) + quickselect(inputList, length // 2)) / 2)
+    
+# If i'm being honest, I don't really know what this is supposed to do.
+# But, it returns the median of some frequencies and intervals and stuff.
+def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
+    if len(classIntervals) != len(frequencies):
+        raise IndexError("The number of class intervals must match the number of frequencies.")
+    
+    # Calculate cumulative frequency
+    cumulativeFreq = [sum(frequencies[:i+1]) for i in range(len(frequencies))]
+    total = sum(frequencies)
+
+    if total == 0:
+        raise ZeroDivisionError("Total frequency cannot be zero.")
+
+    half = total / 2
+
+    # Find median class
+    for i, freqSum in enumerate(cumulativeFreq):
+        if freqSum >= half:
+            medianClassIndex = i
+            break
+
+    # Median class parameters
+    L = classIntervals[medianClassIndex][0]  # Lower boundary
+    F = cumulativeFreq[medianClassIndex - 1] if medianClassIndex > 0 else 0  # Cumulative freq before median class
+    fm = frequencies[medianClassIndex]  # Frequency of median class
+    h = classIntervals[medianClassIndex][1] - classIntervals[medianClassIndex][0]  # Class width
+
+    # Grouped median formula
+    median = L + ((half - F) / fm) * h
+
+    return median
+
+# Low Median: Median of the lower half of the sorted list
+def lowMedian(inputList: list | tuple):
+    sortedList = sorted(inputList)
+    mid = len(sortedList) // 2
+
+    # For an odd-length list, we exclude the middle element
+    lower_half = sortedList[:mid] if len(sortedList) % 2 == 0 else sortedList[:mid]
+    
+    return median(lower_half)
+
+# High Median: Median of the upper half of the sorted list
+def highMedian(inputList: list | tuple):
+    sortedList = sorted(inputList)
+    mid = len(sortedList) // 2
+
+    # For an odd-length list, we exclude the middle element
+    upper_half = sortedList[mid+1:] if len(sortedList) % 2 == 1 else sortedList[mid:]
+
+    return median(upper_half)
         
 # Means and standard deviations of various distribution types.
 class dists:

@@ -6,10 +6,6 @@ I wrote the first 4 functions on the same day I learned to code in Python. Expec
 More detailed descriptions will be found wherever I put the documentation later.
 
 WHAT I DON'T HAVE THAT statistics DOES:
-    median
-    median_low
-    median_high
-    median_grouped
     mode
     multimode
     fmean
@@ -33,6 +29,7 @@ WHAT I HAVE THAT statistics DOESN'T:
     sampling distribution calculations
     binomial distribution calculations
     geometric distribution calculations
+    quickmedian
    
 
 
@@ -84,6 +81,11 @@ Contents:
             zScorify(inputList, index = none, isSample) | O(n)
                 Turns every number in a set into a z-score.
                 If an index is given, it will turn the number at the index into a z-score.
+
+    Median related functions:
+
+        quickselect | Best case: O(n) Worst case: O(n^2)
+            Used for quickmedian.
 
     Class dists
         Distribution related classes and functions.
