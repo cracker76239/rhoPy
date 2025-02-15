@@ -6,22 +6,76 @@ probability = Annotated[float, lambda p: 0 <= p <= 1]
 
 def validateProbability(func):
     # Validates that probabilities are between 0 and 1.
+    # Only works for individual values, not contents of a set. I don't know how to do the latter.
     def wrapper(p, *args, **kwargs):
         if not (0 <= p <= 1):
             raise ValueError("p must be between 0 and 1.")
         return func(p, *args, **kwargs)
     return wrapper
 
-# Input a list or tuple, return a mean.
-def mean(inputList : list | tuple):
+# Input a set of numbers, return a mean.
+# If a set of weights is input, it will return the mean based on those weights.
+def mean(inputList : list | tuple, inputWeights: list | tuple = None):
     if not inputList:
-         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
-    elif not all(isinstance(x, (int, float)) for x in inputList):
-         raise ValueError("Must be a list of numerical values.")
-    elif any(isnan(x) or isinf(x) for x in inputList):
-         raise ValueError("List cannot contain indeterminate (invalid) values NaN or Inf.")
-    else:
+        raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
+    elif (not all(isinstance(x, (int, float)) for x in inputList) or (any(isnan(x) or isinf(x) for x in inputList))):
+        raise ValueError("Must be a list of numerical and determinate values. A string, bool, NaN, etc. was input.")
+    elif inputWeights == None:
         return sum(inputList) / len(inputList)
+    else:
+        # Seperate "if" function for readability
+        if not all(0 <= x <= 1 for x in inputWeights):
+            raise ValueError("The weights for a mean must be probabilities.")
+        elif (sum(inputWeights) != 1):
+            raise ValueError("The weights for a set of values must sum to one.")
+        elif len(inputList) != len(inputWeights):
+            raise IndexError("The length of the both the input set and its weights must be equal.")
+        else:
+            return sum(inputList[i] * inputWeights[i] for i in range(len(inputList)))
+        
+from math import prod, isnan, isinf
+
+# Input a set of numbers, return a geometric mean.
+# If a set of weights is input, it will return the geometric mean based on those weights.
+def geometMean(inputList: list | tuple, inputWeights: list | tuple = None):
+    if not inputList:
+        raise ZeroDivisionError("Cannot find the geometric mean of an empty set; division by zero.")
+    elif not all(isinstance(x, (int, float)) and x > 0 for x in inputList):
+        raise ValueError("Geometric mean requires a list of positive numerical values.")
+    
+    if inputWeights == None:
+        return prod(inputList) ** (1 / len(inputList))
+    else:
+        if not all(0 <= x <= 1 for x in inputWeights):
+            raise ValueError("The weights for a mean must be probabilities.")
+        elif sum(inputWeights) != 1:
+            raise ValueError("The weights for a set of values must sum to one.")
+        elif len(inputList) != len(inputWeights):
+            raise IndexError("The length of both the input set and its weights must be equal.")
+        else:
+            return prod(inputList[i] ** inputWeights[i] for i in range(len(inputList)))
+
+
+# Input a set of numbers, return a harmonic mean.
+# If a set of weights is input, it will return the harmonic mean based on those weights.
+def harmMean(inputList: list | tuple, inputWeights: list | tuple = None):
+    if not inputList:
+        raise ZeroDivisionError("Cannot find the harmonic mean of an empty set; division by zero.")
+    elif not all(isinstance(x, (int, float)) and x > 0 for x in inputList):
+        raise ValueError("Harmonic mean requires a list of positive numerical values.")
+    
+    if inputWeights == None:
+        return len(inputList) / sum(1 / x for x in inputList)
+    else:
+        if not all(0 <= x <= 1 for x in inputWeights):
+            raise ValueError("The weights for a mean must be probabilities.")
+        elif sum(inputWeights) != 1:
+            raise ValueError("The weights for a set of values must sum to one.")
+        elif len(inputList) != len(inputWeights):
+            raise IndexError("The length of both the input set and its weights must be equal.")
+        else:
+            return sum(inputWeights) / sum(inputWeights[i] / inputList[i] for i in range(len(inputList)))
+
 
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the variance of the list.
 def variance(inputList: list | tuple, isSample: bool = False):
@@ -79,6 +133,7 @@ class dists:
 
 # Mu is another way to write "the population mean"
 # Sigma is another way to write "the population standard deviation"
+# Rho is another way to write "the population proportion"
 
     class sampling:
         
@@ -139,8 +194,8 @@ class dists:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
+            
+
 
 if __name__ == "__main__":
     print("running script:")
-
-    print(dists.binom.stDev(0.5,5))
