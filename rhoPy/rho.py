@@ -48,11 +48,13 @@ def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[proba
             raise ZeroDivisionError("The sum of weights cannot be zero.")
         return sum(inputList[i] * inputWeights[i] for i in range(len(inputList))) / total_weight
 
+# Same as mean(), but uses floats for more precision.
+# Also allows NaN and inf to be input.
 def fmean(inputList : list | tuple):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
-    elif (not all(isinstance(x, (int, float)) for x in inputList) or (any(isnan(x) or isinf(x) for x in inputList))):
-        raise ValueError("Must be a list of numerical and determinate values. A string, bool, NaN, etc. was input.")
+    elif (not all(isinstance(x, (int, float)) for x in inputList)):
+        raise ValueError("Must be a list of numerical. A string, bool, etc. was input.")
     else:
         return float(sum(inputList)) / float(len(inputList))
 
