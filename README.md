@@ -5,6 +5,37 @@ I wrote the first 4 functions on the same day I learned to code in Python. Expec
 
 More detailed descriptions will be found wherever I put the documentation later.
 
+WHAT I DON'T HAVE THAT statistics DOES:
+    median
+    median_low
+    median_high
+    median_grouped
+    mode
+    multimode
+    fmean
+    quantiles
+    kde
+    kde_random
+    covariance
+    correlation
+    linear_regression
+
+    normal distribution object
+
+
+WHAT I HAVE THAT statistics DOESN'T:
+    weighted mean
+    weighted geometric mean
+    weighted harmonic mean
+    z-scorify
+    z-score (for a set of inputs)
+    sample (for a set of inputs)
+    sampling distribution calculations
+    binomial distribution calculations
+    geometric distribution calculations
+   
+
+
 Contents:
 
     Random Sample related functions:
