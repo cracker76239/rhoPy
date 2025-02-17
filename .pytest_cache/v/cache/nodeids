@@ -6,6 +6,7 @@
   "Tests/tests.py::testMean",
   "Tests/tests.py::testMeanEmpty",
   "Tests/tests.py::testMeanNumerical",
+  "Tests/tests.py::testMeanWeighted",
   "Tests/tests.py::testProbabilityValidation",
   "Tests/tests.py::testSampleMoreThanListSize",
   "Tests/tests.py::testSampleWithReplacement",

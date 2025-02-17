@@ -18,6 +18,9 @@ def testMeanNumerical():
 def testMean():
     assert mean([1,2,3,4,5]) == 3
 
+def testMeanWeighted():
+    assert mean([1,2,3,4,5],[0.2,0.2,0.2,0.2,0.2]) == 3
+
 def testVarianceEmpty():
     with pytest.raises(ZeroDivisionError):
         variance([])
