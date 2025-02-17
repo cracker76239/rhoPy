@@ -8,7 +8,6 @@ More detailed descriptions will be found wherever I put the documentation later.
 WHAT I DON'T HAVE THAT statistics DOES:
     mode
     multimode
-    fmean
     quantiles
     kde
     kde_random

@@ -30,7 +30,6 @@ def validateProbability(func):
 
 # Input a set of numbers, return a mean.
 # If a set of weights is input, it will return the mean based on those weights.
-@validateProbability
 def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
@@ -41,10 +40,10 @@ def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[proba
     else:
         if len(inputList) != len(inputWeights):
             raise IndexError("The length of both the input set and weights must be equal.")
-        if not all(x >= 0 for x in inputWeights):
+        if not all(x > 0 for x in inputWeights):
             raise ValueError("Weights must be non-negative.")
         total_weight = sum(inputWeights)
-        if total_weight == 0:
+        if total_weight != 1:
             raise ZeroDivisionError("The sum of weights cannot be zero.")
         return sum(inputList[i] * inputWeights[i] for i in range(len(inputList))) / total_weight
 
@@ -60,7 +59,6 @@ def fmean(inputList : list | tuple):
 
 # Input a set of numbers, return a geometric mean.
 # If a set of weights is input, it will return the geometric mean based on those weights.
-@validateProbability
 def geometMean(inputList: list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the geometric mean of an empty set; division by zero.")
@@ -80,7 +78,6 @@ def geometMean(inputList: list | tuple, inputWeights: list[probability] | tuple[
 
 # Input a set of numbers, return a harmonic mean.
 # If a set of weights is input, it will return the harmonic mean based on those weights.
-@validateProbability
 def harmMean(inputList: list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the harmonic mean of an empty set; division by zero.")
@@ -121,8 +118,6 @@ def variance(inputList: list | tuple, isSample: bool = False):
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
 def stDev(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
-def stDev(inputList, isSample : bool = True):
-    return(variance(inputList, isSample) ** 0.5)
 
 # Returns the z-score of a number.
 def zScore(value, mean, stDev):
