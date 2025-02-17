@@ -126,7 +126,7 @@ Contents:
                     stDev(p: probability)
                         Returns the standard deviation of the distribution.
 
-                    
+           :)         
 
 
 

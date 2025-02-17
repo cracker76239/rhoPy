@@ -11,7 +11,7 @@ def quickselect(inputList, k):
     lows = [x for x in inputList if x < pivot]
     highs = [x for x in inputList if x > pivot]
     pivots = [x for x in inputList if x == pivot]
-    
+
     if k < len(lows):
         return quickselect(lows, k)
     elif k < len(lows) + len(pivots):

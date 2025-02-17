@@ -1,0 +1,21 @@
+[
+  "Tests/tests.py::testBinomMean",
+  "Tests/tests.py::testBinomStDev",
+  "Tests/tests.py::testGeometMean",
+  "Tests/tests.py::testGeometStDev",
+  "Tests/tests.py::testMean",
+  "Tests/tests.py::testMeanEmpty",
+  "Tests/tests.py::testMeanNumerical",
+  "Tests/tests.py::testProbabilityValidation",
+  "Tests/tests.py::testSampleMoreThanListSize",
+  "Tests/tests.py::testSampleWithReplacement",
+  "Tests/tests.py::testSampleWithoutReplacement",
+  "Tests/tests.py::testSamplingMeanStDev",
+  "Tests/tests.py::testSamplingPropStDev",
+  "Tests/tests.py::testStDev",
+  "Tests/tests.py::testVariance",
+  "Tests/tests.py::testVarianceEmpty",
+  "Tests/tests.py::testVarianceZero",
+  "Tests/tests.py::testZscorifyIndex",
+  "Tests/tests.py::testZscorifyList"
+]
