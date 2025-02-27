@@ -89,6 +89,13 @@ def testProbabilityValidation():
 
 def testMedian():
     assert median([1,2,3,4,5]) == 3
+    assert median([1,2,3,4]) == 2.5
+    
+def testQuickMedian():
+    assert quickMedian([1,2,3,4,5]) == 3
+    assert quickMedian([1,2,3,4]) == 2.5
+    
+def testLowHighMedian():
 
 
         
