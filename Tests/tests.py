@@ -17,6 +17,9 @@ def testMeanNumerical():
 
 def testMean():
     assert mean([1,2,3,4,5]) == 3
+    
+def testFMean():
+    assert mean([1,2,3,4,5)] == 3
 
 def testMeanWeighted():
     assert mean([1,2,3,4,5],[0.2,0.2,0.2,0.2,0.2]) == 3
@@ -84,7 +87,8 @@ def testProbabilityValidation():
     with pytest.raises(ValueError):
         dists.geomet.mean(69)
 
-
+def testMedian():
+    assert median([1,2,3,4,5]) == 3
 
 
         
