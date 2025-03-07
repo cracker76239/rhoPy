@@ -3,21 +3,22 @@ from math import *
 from typing import Annotated
 
 probability = Annotated[float, lambda p: 0 <= p <= 1]
+comparison = Annotated[str, "<" or "=" or ">"]
 
 # Quickselect algorithm for median functions or others which require sorted lists.
-def quickselect(inputList, k):
-    pivot = random.choice(inputList)
+def quickSelect(inputList, k):
+    pivot = choice(inputList)
     
     lows = [x for x in inputList if x < pivot]
     highs = [x for x in inputList if x > pivot]
     pivots = [x for x in inputList if x == pivot]
 
     if k < len(lows):
-        return quickselect(lows, k)
+        return quickSelect(lows, k)
     elif k < len(lows) + len(pivots):
         return pivots[0]
     else:
-        return quickselect(highs, k - len(lows) - len(pivots))
+        return quickSelect(highs, k - len(lows) - len(pivots))
 
 def validateProbability(func):
     # Validates that probabilities are between 0 and 1.
@@ -160,13 +161,13 @@ def median(inputList: list | tuple):
 
 # Returns the median quickly using the quickselect algorithm.
 # Best case: O(n) Worst case: O(n^2)
-def quickmedian(inputList: list | tuple):
+def quickMedian(inputList: list | tuple):
     length = len(inputList)
     if length % 2 == 0:
-        return quickselect(inputList, length // 2)
+        return quickSelect(inputList, length // 2)
     
     else:
-        return((quickselect(inputList, length // 2 - 1) + quickselect(inputList, length // 2)) / 2)
+        return((quickSelect(inputList, length // 2 - 1) + quickSelect(inputList, length // 2)) / 2)
     
 # If i'm being honest, I don't really know what this is supposed to do.
 # But, it returns the median of some frequencies and intervals and stuff.
@@ -201,7 +202,7 @@ def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
     return median
 
 # Low Median: Median of the lower half of the sorted list
-def lowMedian(inputList: list | tuple):
+def Q1(inputList: list | tuple):
     sortedList = sorted(inputList)
     mid = len(sortedList) // 2
 
@@ -211,7 +212,7 @@ def lowMedian(inputList: list | tuple):
     return median(lower_half)
 
 # High Median: Median of the upper half of the sorted list
-def highMedian(inputList: list | tuple):
+def Q3(inputList: list | tuple):
     sortedList = sorted(inputList)
     mid = len(sortedList) // 2
 
@@ -219,6 +220,9 @@ def highMedian(inputList: list | tuple):
     upper_half = sortedList[mid+1:] if len(sortedList) % 2 == 1 else sortedList[mid:]
 
     return median(upper_half)
+
+def IQR(inputList: list | tuple):
+    return Q3(inputList) - Q1(inputList)
         
 # Means and standard deviations of various distribution types.
 class dists:
@@ -286,8 +290,6 @@ class dists:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
-            
-
-
+                
 if __name__ == "__main__":
     print("running script:")

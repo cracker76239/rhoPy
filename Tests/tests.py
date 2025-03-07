@@ -19,7 +19,7 @@ def testMean():
     assert mean([1,2,3,4,5]) == 3
     
 def testFMean():
-    assert mean([1,2,3,4,5)] == 3
+    assert mean([1,2,3,4,5]) == 3
 
 def testMeanWeighted():
     assert mean([1,2,3,4,5],[0.2,0.2,0.2,0.2,0.2]) == 3
@@ -92,19 +92,11 @@ def testMedian():
     assert median([1,2,3,4]) == 2.5
     
 def testQuickMedian():
-    assert quickMedian([1,2,3,4,5]) == 3
-    assert quickMedian([1,2,3,4]) == 2.5
+    assert quickMedian([1,2,3,4,5]) == 2.5
+    assert quickMedian([1,2,3,4]) == 3
     
-def testLowHighMedian():
-
-
-        
-
-
-
-    
-
-
-
-
-
+def testQuartiles():
+    list = [1,2,3,4,5]
+    assert Q1(list) == 1.5
+    assert Q3(list) == 4.5
+    assert IQR(list) == 3
