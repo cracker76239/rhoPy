@@ -31,6 +31,7 @@ def validateProbability(func):
 
 # Input a set of numbers, return a mean.
 # If a set of weights is input, it will return the mean based on those weights.
+@validateProbability
 def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
@@ -117,25 +118,25 @@ def variance(inputList: list | tuple, isSample: bool = False):
             return (tempVariance / n)    
     
 # Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
-def stDev(inputList, isSample : bool = False):
+def std(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
 
 # Returns the z-score of a number.
-def zScore(value, mean, stDev):
-    return((value - mean) / stDev)
+def zScore(value, mean, std):
+    return((value - mean) / std)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
 def zScorify(inputList: list | tuple, index: int = None, sample: bool = False):
     inputMean = mean(inputList)
-    inputStDev = stDev(inputList, sample)
+    inputStd = std(inputList, sample)
 
     if index == None:
-        return[round(((x - inputMean) / inputStDev), 2) for x in inputList]
+        return[round(((x - inputMean) / inputStd), 2) for x in inputList]
     else:
-       return((inputList[index] - inputMean) / inputStDev)
+       return((inputList[index] - inputMean) / inputStd)
 
 # Input a list or tuple, and return a sample of size n with or without replacement.
-def sample(inputList: list | tuple, n: int, replacement: bool = True):
+def sample(inputList: list | tuple, n: int, replacement: bool = False):
     popSize = len(inputList)
     if replacement == True:
         return[inputList[randint(0,popSize - 1)] for _ in range(n)]
@@ -164,10 +165,10 @@ def median(inputList: list | tuple):
 def quickMedian(inputList: list | tuple):
     length = len(inputList)
     if length % 2 == 0:
-        return quickSelect(inputList, length // 2)
+        return((quickSelect(inputList, length // 2 - 1) + quickSelect(inputList, length // 2)) / 2)
     
     else:
-        return((quickSelect(inputList, length // 2 - 1) + quickSelect(inputList, length // 2)) / 2)
+        return quickSelect(inputList, length // 2)
     
 # If i'm being honest, I don't really know what this is supposed to do.
 # But, it returns the median of some frequencies and intervals and stuff.
@@ -223,41 +224,121 @@ def Q3(inputList: list | tuple):
 
 def IQR(inputList: list | tuple):
     return Q3(inputList) - Q1(inputList)
-        
-# Means and standard deviations of various distribution types.
-class dists:
 
-# Mu is another way to write "the population mean"
-# Sigma is another way to write "the population standard deviation"
-# Rho is another way to write "the population proportion"
+class outlier:
+
+    def sigma(inputList: list | tuple):
+        mean = mean(inputList)
+        std = std(inputList)
+        return [x for x in inputList if not (mean - 2 * std <= x <= mean + 2 * std)]
+                
+    def IQR(inputList: list | tuple):
+        median = median(inputList)
+        IQR = IQR(inputList)
+        return [x for x in inputList if not (median - 1.5 * IQR <= x <= median + 1.5 * IQR)]
+                
+    def test(inputList: list | tuple):
+        outliers = outlier.sigma(inputList) + outlier.IQR(inputList)
+        if outliers != []:
+            return True
+            
+        else:
+            return False
+
+# Means and standard deviations of various distribution types.
+class dstr:
+
+    # A.K.A. z distribution
+    class normal:
+
+        def __init__(self, mean: float | int = 0, std: float | int = 1):
+            self.mean = mean
+            self.std = std
+
+        def __add__(dist1, dist2):
+            meanNew = dist1.mean + dist2.mean
+            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
+            return dstr.normal(meanNew, stdNew)
+        
+        def __sub__(dist1, dist2):
+            meanNew = dist1.mean - dist2.mean
+            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
+            return dstr.normal(meanNew, stdNew)
+        
+        
+        def pdf(self, x: float | int):
+            return (1 / (2 * pi * self.std ** 2) ** 0.5) * exp(-((x - self.mean) ** 2) / (2 * self.std ** 2))
+
+
+        def cdf(self, a: float | int, b: float | int):
+            phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
+            return phi(b) - phi(a)
+
+
+    class t:
+        def __init__(self, df: float | int):
+            self.df = df
+
+    class chisqr:
+        def __init__(self, list1: list, list2: list = None):
+            self.list1 = list1
+            self.list2 = list2
+
+        def df(self):
+            if self.list2 == None:
+                return len.list1 - 2
+            
+            else:
+                return (len.list1 - 1) * (len.list2 - 1)
 
     class sampling:
         
-        # The sampling distribution of p-hat
+        # The sampling distribution of the sample proportion
         class prop:
     
-            # Mean of the sampling distribution of p-hat is equal to p.
+            @validateProbability
+            def __init__(self, p: probability, n: int):
+                self.p = p
+                self.n = n
+
+            # Mean of the sampling distribution of p-hat is equal to rho.
+            @staticmethod
+            @validateProbability
+            def mean(p: probability):
+                return p
             
             # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
             # Here, probability is used do ensure that the proportion is between 0 and 1. It is not an actual probability.
             @staticmethod
             @validateProbability
-            def stDev(p: probability, n: int):
+            def std(p: probability, n: int):
                 return(( (p * (1 - p)) / n) ** 0.5)
             
-        # The sampling distribution of x-bar
+        # The sampling distribution of sample mean
         class mean:
             
+            def __init__(self, mean: float | int, std: float | int, n: int):
+                self.mean = mean
+                self.std = std
+                self.n = n
+
             # Mean of the sampling distribution of x-bar is equal to the population mean.
-        
+            @staticmethod
+            def mean(xBar: float | int):
+                return xBar
+
             # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
             @staticmethod
-            def stDev(sigma: float | int, n: int):
+            def std(sigma: float | int, n: int):
                 return(sigma / (n ** 0.5))
-    
+            
     # Describes the probability of x successes given n attempts and p probability of success.
     class binom:
         
+        def __init__(self, p: probability, n: int):
+            self.p = p
+            self.n = n
+
         # The mean of the probability distribution, A.K.A. the expected amount of successes.
         @staticmethod
         @validateProbability
@@ -267,12 +348,15 @@ class dists:
         # The standard deviation of the probability distribution.
         @staticmethod
         @validateProbability
-        def stDev(p: probability, n: int):
+        def std(p: probability, n: int):
             return((n * p * (1 - p)) ** 0.5)
     
     # Describes the probability of taking x amount of attempts to get a success for p probability of success.
     class geomet:
         
+        def __init__(self, p: probability):
+            self.p = p
+
         # The expected amount of attempts for a success.
         @staticmethod
         @validateProbability
@@ -285,11 +369,13 @@ class dists:
         # The standard deviation of the probability distribution.
         @staticmethod
         @validateProbability
-        def stDev(p: probability):
+        def std(p: probability):
             if p == 0:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
+
+# Just to have
+z = dstr.normal()
                 
 if __name__ == "__main__":
-    print("running script:")
