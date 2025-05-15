@@ -280,16 +280,22 @@ class dstr:
             self.df = df
 
     class chisqr:
-        def __init__(self, list1: list, list2: list = None):
-            self.list1 = list1
-            self.list2 = list2
-
-        def df(self):
-            if self.list2 == None:
-                return len.list1 - 2
-            
+        def __init__(self, obs: list, exp: list = None):
+            self.obs = obs
+            if (self.obs[row] == list for row in self.obs):
+                row_total = [sum(row) for row in self.obs]
+                column_total = [sum(row[i] for row in self.obs) for i in range(len(self.obs[0]))]
+                table_total = sum(row_total)
+                self.exp = [[a * b / table_total for b in row_total] for a in column_total]
+            elif (exp[row] == list for row in exp):
+                raise TypeError("The expected and observed values must both be matrices")
             else:
-                return (len.list1 - 1) * (len.list2 - 1)
+                self.exp = exp
+
+        def chisqr(self):
+            if (self.obs[row] == list for row in self.obs):
+                
+            else:
 
     class sampling:
         
@@ -301,15 +307,13 @@ class dstr:
                 self.p = p
                 self.n = n
 
-            # Mean of the sampling distribution of p-hat is equal to rho.
-            @staticmethod
+            # Mean of the sampling distribution of p-hat is equal to rho.           
             @validateProbability
             def mean(p: probability):
                 return p
             
             # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
             # Here, probability is used do ensure that the proportion is between 0 and 1. It is not an actual probability.
-            @staticmethod
             @validateProbability
             def std(p: probability, n: int):
                 return(( (p * (1 - p)) / n) ** 0.5)
@@ -323,12 +327,10 @@ class dstr:
                 self.n = n
 
             # Mean of the sampling distribution of x-bar is equal to the population mean.
-            @staticmethod
             def mean(xBar: float | int):
                 return xBar
 
             # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
-            @staticmethod
             def std(sigma: float | int, n: int):
                 return(sigma / (n ** 0.5))
             
@@ -340,13 +342,11 @@ class dstr:
             self.n = n
 
         # The mean of the probability distribution, A.K.A. the expected amount of successes.
-        @staticmethod
         @validateProbability
         def mean(p: probability, n: int):
             return(n * p)
             
         # The standard deviation of the probability distribution.
-        @staticmethod
         @validateProbability
         def std(p: probability, n: int):
             return((n * p * (1 - p)) ** 0.5)
@@ -358,7 +358,6 @@ class dstr:
             self.p = p
 
         # The expected amount of attempts for a success.
-        @staticmethod
         @validateProbability
         def mean(p: probability):
             if p == 0:
@@ -367,7 +366,6 @@ class dstr:
                 return(1/p)
         
         # The standard deviation of the probability distribution.
-        @staticmethod
         @validateProbability
         def std(p: probability):
             if p == 0:
