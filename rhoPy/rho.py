@@ -1,5 +1,5 @@
 from random import *
-from math import *
+from math import prod, erf, isclose
 from typing import Annotated
 
 probability = Annotated[float, lambda p: 0 <= p <= 1]
@@ -21,17 +21,19 @@ def quickSelect(inputList, k):
         return quickSelect(highs, k - len(lows) - len(pivots))
 
 def validateProbability(func):
-    # Validates that probabilities are between 0 and 1.
-    # Only works for individual values, not contents of a set. I don't know how to do the latter.
     def wrapper(p, *args, **kwargs):
-        if not (0 <= p <= 1):
-            raise ValueError("p must be between 0 and 1.")
+        # Handle list or scalar input
+        if isinstance(p, list):
+            if not all(isinstance(val, (int, float)) and 0 <= val <= 1 for val in p):
+                raise ValueError("All probabilities in the list must be between 0 and 1.")
+        elif not isinstance(p, (int, float)) or not (0 <= p <= 1):
+            raise ValueError("p must be a number between 0 and 1.")
+        
         return func(p, *args, **kwargs)
     return wrapper
 
 # Input a set of numbers, return a mean.
 # If a set of weights is input, it will return the mean based on those weights.
-@validateProbability
 def mean(inputList : list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
@@ -55,12 +57,13 @@ def fmean(inputList : list | tuple):
     if not inputList:
         raise ZeroDivisionError("Cannot find the mean of an empty set; division by zero.")
     elif (not all(isinstance(x, (int, float)) for x in inputList)):
-        raise ValueError("Must be a list of numerical. A string, bool, etc. was input.")
+        raise ValueError("Must be a list of numerical values. A string, bool, etc. was input.")
     else:
         return float(sum(inputList)) / float(len(inputList))
 
 # Input a set of numbers, return a geometric mean.
 # If a set of weights is input, it will return the geometric mean based on those weights.
+@validateProbability
 def geometMean(inputList: list | tuple, inputWeights: list[probability] | tuple[probability] = None):
     if not inputList:
         raise ZeroDivisionError("Cannot find the geometric mean of an empty set; division by zero.")
@@ -113,7 +116,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
         tempVariance = sum((x - inputMean) ** 2 for x in inputList)
 
         if isSample == True:
-            return (tempVariance / (n))
+            return (tempVariance / (n - 1))
         else:
             return (tempVariance / n)    
     
@@ -126,7 +129,7 @@ def zScore(value, mean, std):
     return((value - mean) / std)
 
 # Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
-def zScorify(inputList: list | tuple, index: int = None, sample: bool = False):
+def standardize(inputList: list | tuple, index: int = None, sample: bool = False):
     inputMean = mean(inputList)
     inputStd = std(inputList, sample)
 
@@ -282,20 +285,33 @@ class dstr:
     class chisqr:
         def __init__(self, obs: list, exp: list = None):
             self.obs = obs
-            if (self.obs[row] == list for row in self.obs):
+
+            # Check if obs is a matrix (list of lists)
+            if all(isinstance(row, list) for row in self.obs):
                 row_total = [sum(row) for row in self.obs]
                 column_total = [sum(row[i] for row in self.obs) for i in range(len(self.obs[0]))]
                 table_total = sum(row_total)
-                self.exp = [[a * b / table_total for b in row_total] for a in column_total]
-            elif (exp[row] == list for row in exp):
-                raise TypeError("The expected and observed values must both be matrices")
+
+                self.exp = [[(row_total[i] * column_total[j]) / table_total for j in range(len(column_total))]
+                            for i in range(len(row_total))]
+
+            elif exp is not None:
+                # Check if exp is a matrix while obs is not, or vice versa
+                if all(isinstance(row, list) for row in exp):
+                    raise TypeError("The expected and observed values must either both be matrices or both be lists")
+                else:
+                    self.exp = exp
+
             else:
-                self.exp = exp
+                raise ValueError("Expected values must be provided for 1D observed data.")
 
         def chisqr(self):
-            if (self.obs[row] == list for row in self.obs):
-                
+            if all(isinstance(row, list) for row in self.obs):
+                return [[((obs - exp) ** 2) / exp for obs, exp in zip(obs_row, exp_row)]
+                        for obs_row, exp_row in zip(self.obs, self.exp)]
             else:
+                return [((o - e) ** 2) / e for o, e in zip(self.obs, self.exp)]
+
 
     class sampling:
         
@@ -307,14 +323,11 @@ class dstr:
                 self.p = p
                 self.n = n
 
-            # Mean of the sampling distribution of p-hat is equal to rho.           
-            @validateProbability
+            # Mean of the sampling distribution of p-hat is equal to the population proportion.           
             def mean(p: probability):
                 return p
             
             # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
-            # Here, probability is used do ensure that the proportion is between 0 and 1. It is not an actual probability.
-            @validateProbability
             def std(p: probability, n: int):
                 return(( (p * (1 - p)) / n) ** 0.5)
             
@@ -337,28 +350,27 @@ class dstr:
     # Describes the probability of x successes given n attempts and p probability of success.
     class binom:
         
+        @validateProbability
         def __init__(self, p: probability, n: int):
             self.p = p
             self.n = n
 
         # The mean of the probability distribution, A.K.A. the expected amount of successes.
-        @validateProbability
         def mean(p: probability, n: int):
             return(n * p)
             
         # The standard deviation of the probability distribution.
-        @validateProbability
         def std(p: probability, n: int):
             return((n * p * (1 - p)) ** 0.5)
     
     # Describes the probability of taking x amount of attempts to get a success for p probability of success.
     class geomet:
         
+        @validateProbability
         def __init__(self, p: probability):
             self.p = p
 
         # The expected amount of attempts for a success.
-        @validateProbability
         def mean(p: probability):
             if p == 0:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
@@ -366,7 +378,6 @@ class dstr:
                 return(1/p)
         
         # The standard deviation of the probability distribution.
-        @validateProbability
         def std(p: probability):
             if p == 0:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
@@ -377,3 +388,7 @@ class dstr:
 z = dstr.normal()
                 
 if __name__ == "__main__":
+    e = [[1,2,3],[4,5,6],[7,8,9]]
+    c = dstr.chisqr(e)
+    print(c.exp)
+    print("yurr")

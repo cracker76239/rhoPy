@@ -1,1 +1,4 @@
-{}
+{
+  "Tests/tests.py::testSamplingPropStDev": true,
+  "Tests/tests.py::testSamplingMeanStDev": true
+}
