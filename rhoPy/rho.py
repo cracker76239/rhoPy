@@ -92,7 +92,7 @@ def harmMean(inputList: list | tuple, inputWeights: list[probability] | tuple[pr
     if inputWeights == None:
         return len(inputList) / sum(1 / x for x in inputList)
     else:
-        
+        # Don't ask me how this works
         if sum(inputWeights) != 1:
             raise ValueError("The weights for a set of values must sum to one.")
         elif len(inputList) != len(inputWeights):
@@ -120,7 +120,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
         else:
             return (tempVariance / n)    
     
-# Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
+# Input a list or tuple and whether or not it is a sample, and return the standard deviation of the list.
 def std(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
 
@@ -203,6 +203,7 @@ def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
     # Grouped median formula
     median = L + ((half - F) / fm) * h
 
+    # Honestly I have no idea how this works
     return median
 
 # Low Median: Median of the lower half of the sorted list
