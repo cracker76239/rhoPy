@@ -437,12 +437,3 @@ class dstr:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
-
-# Just to have
-z = dstr.normal()
-                
-if __name__ == "__main__":
-    e = [[1,2,3],[4,5,6],[7,8,9]]
-    c = dstr.chisqr(e)
-    print(c.exp)
-    print("yurr")
