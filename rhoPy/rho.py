@@ -257,6 +257,7 @@ class dstr:
         def __init__(self, mean: float | int = 0, std: float | int = 1):
             self.mean = mean
             self.std = std
+            self.var = std ** 2
 
         def __add__(dist1, dist2):
             meanNew = dist1.mean + dist2.mean
@@ -294,6 +295,8 @@ class dstr:
 
                 self.exp = [[(row_total[i] * column_total[j]) / table_total for j in range(len(column_total))]
                             for i in range(len(row_total))]
+                self.df = (row_total - 1) * (column_total - 1)
+                self.stat = [[((obs - exp) ** 2) / exp for obs, exp in zip(obs_row, exp_row)] for obs_row, exp_row in zip(self.obs, self.exp)]
 
             elif exp is not None:
                 # Check if exp is a matrix while obs is not, or vice versa
@@ -301,51 +304,102 @@ class dstr:
                     raise TypeError("The expected and observed values must either both be matrices or both be lists")
                 else:
                     self.exp = exp
+                    self.df = len(exp) - 1
+                    self.stat = [((o - e) ** 2) / e for o, e in zip(self.obs, self.exp)]
 
             else:
                 raise ValueError("Expected values must be provided for 1D observed data.")
-
-        def chisqr(self):
-            if all(isinstance(row, list) for row in self.obs):
-                return [[((obs - exp) ** 2) / exp for obs, exp in zip(obs_row, exp_row)]
-                        for obs_row, exp_row in zip(self.obs, self.exp)]
-            else:
-                return [((o - e) ** 2) / e for o, e in zip(self.obs, self.exp)]
-
-
+                
     class sampling:
         
         # The sampling distribution of the sample proportion
         class prop:
-    
-            @validateProbability
-            def __init__(self, p: probability, n: int):
-                self.p = p
-                self.n = n
 
-            # Mean of the sampling distribution of p-hat is equal to the population proportion.           
-            def mean(p: probability):
-                return p
+            @validateProbability
+            def __init__(self, p: float = None, n: int = None, *, mean: float = None, std: float = None, norm: bool = None):
+                if p is not None and n is not None:
+                    self.p = p
+                    self.n = n
+                    self.mean = p
+                    self.std = ((p * (1 - p)) / n) ** 0.5
+                    self.variance = self.std ** 2
+                    if ((p * n > 10) or ((1 - p) * n > 10)) and norm == False:
+                        self.norm = False
+                    else:
+                        self.norm = True
+                elif mean is not None and std is not None:
+                    self.p = mean
+                    self.n = None
+                    self.mean = mean
+                    self.std = std
+                    self.variance = std ** 2
+                    self.norm = norm
+                else:
+                    raise ValueError("Provide either (p and n) or (mean, std, and normality)")
+
+            def __sub__(dist1, dist2):
+                new_mean = dist1.p - other.p
+                new_std = ((dist1.p * (1 - dist1.p)) / dist1.n + (dist2.p * (1 - dist2.p)) / dist2.n) ** 0.5
+                if (dist1.norm == True) and (dist2.norm == True):
+                    new_norm = True
+                else:
+                    new_norm = False
+                return dstr.sampling.prop(mean = new_mean, std = new_std, norm = new_norm)
             
-            # Returns the standard deviation of the sampling distribution of p-hat for sample size n.
-            def std(p: probability, n: int):
-                return(( (p * (1 - p)) / n) ** 0.5)
-            
+            def pdf(self, x):
+                if self.norm == True:
+                    return dstr.normal(self.mean,self.std).pdf(x)
+                else:
+                    raise TypeError("The sampling distribution is not approximately normal")
+                
+            def cdf(self, x):
+                if self.norm == True:
+                    return dstr.normal(self.mean,self.std).cdf(x)
+                else:
+                    raise TypeError("The sampling distribution is not approximately normal")
+                
         # The sampling distribution of sample mean
         class mean:
             
-            def __init__(self, mean: float | int, std: float | int, n: int):
+            def __init__(self, mean: float | int, std: float | int, n: int, norm : bool):
                 self.mean = mean
-                self.std = std
+                self.std = std / (n ** 0.5)
                 self.n = n
+                if (n >= 30) or norm == True:
+                    self.norm = True
+                else:
+                    self.norm = False
 
-            # Mean of the sampling distribution of x-bar is equal to the population mean.
-            def mean(xBar: float | int):
-                return xBar
-
-            # Returns the standard deviation of the sampling distribution of x-bar for sample size n.
-            def std(sigma: float | int, n: int):
-                return(sigma / (n ** 0.5))
+            def __add__(dist1,dist2):
+                new_mean = dist1.mean + dist2.mean
+                new_std = (((dist1.std ** 2) / dist1.n) + (dist2.std ** 2) / dist2.n) ** 0.5
+                if (dist1.norm == True) and (dist2.norm == True):
+                    new_norm = True
+                else:
+                    new_norm = False
+                return dstr.sampling.mean(new_mean,new_std,None,new_norm)
+            
+            def sub(dist1,dist2):
+                new_mean = dist1.mean - dist2.mean
+                new_std = (((dist1.std ** 2) / dist1.n) + (dist2.std ** 2) / dist2.n) ** 0.5
+                if (dist1.norm == True) and (dist2.norm == True):
+                    new_norm = True
+                else:
+                    new_norm = False
+                return dstr.sampling.mean(new_mean,new_std,None,new_norm)
+            
+            def pdf(self, x):
+                if self.norm == True:
+                    return dstr.normal(self.mean,self.std).pdf(x)
+                else:
+                    raise TypeError("The sampling distribution is not approximately normal")
+                
+            def cdf(self, x):
+                if self.norm == True:
+                    return dstr.normal(self.mean,self.std).cdf(x)
+                else:
+                    raise TypeError("The sampling distribution is not approximately normal")
+                
             
     # Describes the probability of x successes given n attempts and p probability of success.
     class binom:
