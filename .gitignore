@@ -1,7 +1,6 @@
 # Created by pytest automatically.
 *
-__pycache__
+__pycache__/*
 .pytest_cache
-rho.cpython-313.pyc
-__init__.cpython-313.pyc
-statsLib.cpython-313.pyc
+poetry.lock
+pyproject.toml
