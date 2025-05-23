@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "rhoPy"
+version = "0.0.0"
+description = "A (currently) small Python library of statistics functions which are aimed to be more efficient and expansive compared to the default library."
+license = "Apache-2.0"
+keywords = ['statistics', 'math']
+readme = "README.md"
+authors = [
+    "Caleb 136144800+cracker76239@users.noreply.github.com"
+]
+
+packages = [{ include = "rhoPy" }]  
+
+[[tool.poetry.source]]
+name = "rhoPy"
+url = "https://github.com/cracker76239/rhoPy"
+
+[tool.poetry.dependencies]
+python = ">=3.13"
+
+[tool.poetry.scripts]
+my_package_cli = 'rhoPy.console:run'
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
