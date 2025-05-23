@@ -295,7 +295,7 @@ class dstr:
 
                 self.exp = [[(row_total[i] * column_total[j]) / table_total for j in range(len(column_total))]
                             for i in range(len(row_total))]
-                self.df = (row_total - 1) * (column_total - 1)
+                self.df = (len(row_total) - 1) * (len(column_total) - 1)
                 self.stat = [[((obs - exp) ** 2) / exp for obs, exp in zip(obs_row, exp_row)] for obs_row, exp_row in zip(self.obs, self.exp)]
 
             elif exp is not None:
