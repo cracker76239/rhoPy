@@ -174,7 +174,7 @@ def quickMedian(inputList: list | tuple):
         return quickSelect(inputList, length // 2)
     
 # If i'm being honest, I don't really know what this is supposed to do.
-# But, it returns the median of some frequencies and intervals and stuff.
+# But it returns the median of some frequencies and intervals and stuff.
 def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
     if len(classIntervals) != len(frequencies):
         raise IndexError("The number of class intervals must match the number of frequencies.")
@@ -241,12 +241,7 @@ class outlier:
         return [x for x in inputList if not (median - 1.5 * IQR <= x <= median + 1.5 * IQR)]
                 
     def test(inputList: list | tuple):
-        outliers = outlier.sigma(inputList) + outlier.IQR(inputList)
-        if outliers != []:
-            return True
-            
-        else:
-            return False
+        return sorted((outlier.IQR(inputList)).extend(outlier.sigma(inputList)))
 
 # Means and standard deviations of various distribution types.
 class dstr:
@@ -296,7 +291,8 @@ class dstr:
                 self.exp = [[(row_total[i] * column_total[j]) / table_total for j in range(len(column_total))]
                             for i in range(len(row_total))]
                 self.df = (len(row_total) - 1) * (len(column_total) - 1)
-                self.stat = [[((obs - exp) ** 2) / exp for obs, exp in zip(obs_row, exp_row)] for obs_row, exp_row in zip(self.obs, self.exp)]
+                self.cntrb = [[round(((obs - exp) ** 2) / exp, 5) for obs, exp in zip(obs_row, exp_row)] for obs_row, exp_row in zip(self.obs, self.exp)]
+                self.stat = sum([sum(row) for row in self.cntrb])
 
             elif exp is not None:
                 # Check if exp is a matrix while obs is not, or vice versa
@@ -305,7 +301,8 @@ class dstr:
                 else:
                     self.exp = exp
                     self.df = len(exp) - 1
-                    self.stat = [((o - e) ** 2) / e for o, e in zip(self.obs, self.exp)]
+                    self.cntrb = [((o - e) ** 2) / e for o, e in zip(self.obs, self.exp)]
+                    self.stat = sum(self.cntrb)
 
             else:
                 raise ValueError("Expected values must be provided for 1D observed data.")
@@ -338,7 +335,7 @@ class dstr:
                     raise ValueError("Provide either (p and n) or (mean, std, and normality)")
 
             def __sub__(dist1, dist2):
-                new_mean = dist1.p - other.p
+                new_mean = dist1.p - dist2.p
                 new_std = ((dist1.p * (1 - dist1.p)) / dist1.n + (dist2.p * (1 - dist2.p)) / dist2.n) ** 0.5
                 if (dist1.norm == True) and (dist2.norm == True):
                     new_norm = True
@@ -437,12 +434,3 @@ class dstr:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
-
-# Just to have
-z = dstr.normal()
-                
-if __name__ == "__main__":
-    e = [[1,2,3],[4,5,6],[7,8,9]]
-    c = dstr.chisqr(e)
-    print(c.exp)
-    print("yurr")

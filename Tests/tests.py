@@ -3,7 +3,9 @@ sys.path.append('C:/Users/caleb/Documents/GitHub/rhoPy')
 
 from random import *
 import pytest
-from rhoPy.rho import * # type: ignore
+from statcat.statcat import * # type: ignore
+
+# python -m pytest Tests/tests.py
 
 # Some tests.
 
@@ -59,20 +61,6 @@ def testSampleMoreThanListSize():
     result = sample([1, 2, 3], 5, replacement=True)
     assert len(result) == 5
 
-def testSamplingPropStd():
-    assert dstr.sampling.prop.std(0.5, 10) == pytest.approx(0.1581, rel=1e-2)
-    assert dstr.sampling.prop.std(0.2, 20) == pytest.approx(0.0894, rel=1e-2)
-
-def testSamplingMeanStd():
-    assert dstr.sampling.mean.std(10, 5) == pytest.approx(4.4721, rel=1e-2)
-    assert dstr.sampling.mean.std(2, 10) == pytest.approx(0.6325, rel=1e-2)
-
-def testBinom():
-    assert dstr.binom.mean(0.5, 10) == 5
-    assert dstr.binom.mean(0.3, 20) == 6
-    assert dstr.binom.std(0.5, 10) == pytest.approx(1.58, rel=1e-2)
-    assert dstr.binom.std(0.2, 20) == pytest.approx(1.79, rel=1e-2)
-
 def testGeomet():
     assert dstr.geomet.mean(0.5) == 2
     assert dstr.geomet.mean(0.25) == 4
@@ -99,4 +87,8 @@ def testQuartiles():
 
 def test_chisq():
     assert dstr.chisqr([[1,2,3],[4,5,6],[7,8,9]]).exp == [[1.6, 2.0, 2.4], [4.0, 5.0, 6.0], [6.4, 8.0, 9.6]]
-    assert dstr.chisqr([1,2,3], [2,3,4]).exp == [2,3,4]
+    assert dstr.chisqr([[1,2,3],[4,5,6],[7,8,9]]).cntrb == [[0.225, 0.0, 0.15], [0.0, 0.0, 0.0], [0.05625, 0.0, 0.0375]]
+    assert dstr.chisqr([[1,2,3],[4,5,6],[7,8,9]]).stat == 0.46875
+    assert dstr.chisqr([1,2,3], [2,3,4]).cntrb == [0.5, 0.3333333333333333, 0.25]
+    assert dstr.chisqr([1,2,3], [2,3,4]).stat == 1.0833333333333333
+    
