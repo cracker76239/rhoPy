@@ -264,11 +264,12 @@ class dstr:
             stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
             return dstr.normal(meanNew, stdNew)
         
+        def kernel(self, x:float | int):
+            return exp(-((x - self.mean) ** 2) / (2 * self.std ** 2))
         
         def pdf(self, x: float | int):
-            return (1 / (2 * pi * self.std ** 2) ** 0.5) * exp(-((x - self.mean) ** 2) / (2 * self.std ** 2))
-
-
+            return (1 / (2 * pi * self.std ** 2) ** 0.5) * self.kernel
+        
         def cdf(self, a: float | int, b: float | int):
             phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
             return phi(b) - phi(a)
@@ -397,6 +398,34 @@ class dstr:
                 else:
                     raise TypeError("The sampling distribution is not approximately normal")
                 
+        # This is black magic to me.
+        # I'm gonna try my best.
+        class kde:
+
+            def __init__(self, data, h, kernel = None ): # None turns into dstr.normal().kernel at runtime
+                self.data = data
+                if isinstance(h, str):
+                    if h == 'scott':
+                        std = std(data)
+                        self.h = std * self.n ** (-1/5)
+                    elif h == 'silverman':
+                        std = std(data)
+                        iqr = outlier.iqr(data)
+                        self.h = 0.9 * min(std, iqr / 1.34) * self.n ** (-1/5)
+                    else:
+                        raise ValueError(f"Unknown bandwidth rule: {h}")
+                else:
+                    self.h = h
+                if kernel is None:
+                    kernel = dstr.normal().kernel
+                self.kernel = kernel
+                self.n = len(self.data)
+                
+            def pdf(self, x):
+                return (
+                    1/(self.n * self.h) * sum(self.kernel((x - x_i) / self.h) for x_i in self.data)
+                )
+                
             
     # Describes the probability of x successes given n attempts and p probability of success.
     class binom:
@@ -434,3 +463,36 @@ class dstr:
                 raise ZeroDivisionError("For geometric distributions, p cannot equal zero. Success can never be reached.")
             else:
                 return(((1-p) ** 0.5) / p)
+            
+# kernels are sick
+class kernel:
+
+    @staticmethod
+    def uniform(u):
+        if -1 <= u <= 1:
+            return 1/2
+        else:
+            return 0
+        
+    @staticmethod
+    def triweight(u):
+        if -1 <= u <= 1:
+            return 35/32 * (1 - (abs(u) ** 3) ** 3)
+        else:
+            return 0
+        
+    @staticmethod
+    def triweight(u):
+        if -1 <= u <= 1:
+            return 1 - abs(u)
+        else:
+            return 0
+        
+    @staticmethod
+    def silverman(u):
+        return 1/2 * exp(-(abs(u) / (2 ** 0.5))) * sin((abs(u) / (2 ** 0.5)) + pi / 4)
+    
+    @staticmethod
+    def sigmoid(u):
+        return (2 / pi) * (1 / (exp(u) + exp(-u)))
+
