@@ -477,12 +477,19 @@ class kernel:
     @staticmethod
     def triweight(u):
         if -1 <= u <= 1:
+            return 35/32 * (1 - (abs(u) ** 2) ** 2)
+        else:
+            return 0
+        
+    @staticmethod
+    def tricube(u):
+        if -1 <= u <= 1:
             return 35/32 * (1 - (abs(u) ** 3) ** 3)
         else:
             return 0
         
     @staticmethod
-    def triweight(u):
+    def triangular(u):
         if -1 <= u <= 1:
             return 1 - abs(u)
         else:
@@ -495,4 +502,58 @@ class kernel:
     @staticmethod
     def sigmoid(u):
         return (2 / pi) * (1 / (exp(u) + exp(-u)))
+    
+    @staticmethod
+    def biweight(u):
+        if -1 <= u <= 1:
+            return 15/16 * (1 - (u ** 2) ** 2)
+        else:
+            return 0
+        
+    @staticmethod
+    def logistic(u):
+        return 1 / (exp(u) + 2 + exp(-u))
+    
+    @staticmethod
+    def parabolic(u):
+        if -1 <= u <= 1:
+            return 3/4 * (1 - (u ** 2))
+        else:
+            return 0
+        
+    @staticmethod
+    def cosine(u):
+        if -1 <= u <= 1:
+            return pi/4 * cos((pi/2) * u)
+        else:
+            return 0
+
+# Regression
+class reg:
+    
+    # Linear
+    class lin:
+
+        def __init__(self, xdata, ydata):
+            self.xdata = xdata
+            self.ydata = ydata
+            self.data = [(x,y) for x, y in zip(xdata,ydata)] 
+            self._compute_stats()
+
+        def _compute_stats(self):
+            self.x_bar = mean(self.xdata)
+            self.y_bar = mean(self.ydata)
+            self.xdev = [x - self.x_bar for x in self.xdata]
+            self.ydev = [y - self.y_bar for y in self.ydata]
+            self.b = (sum([(x * y) for x, y in zip (self.xdata,self.ydata)])) / sum([(x ** 2) for x in self.xdev])
+            self.a = self.y_bar - (self.b * self.x_bar)
+            self.residuals = [(y - (self.a + self.b * x)) for x, y in zip(self.xdata,self.ydata)] 
+            self.rsq = 1 - (sum([r ** 2 for r in self.residuals]) / sum([y ** 2 for y in self.ydev]))
+            self.r = self.rsq ** 0.5
+            self.s = sum([y ** 2 for y in self.ydev]) / len(self.data)
+
+        def eq(self, x):
+            return self.a + self.b * x
+        
+
 
