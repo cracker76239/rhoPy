@@ -20,6 +20,89 @@ def quickSelect(inputList, k):
     else:
         return quickSelect(highs, k - len(lows) - len(pivots))
 
+# General cdf function using trapezoidal method
+def cdf(u, function, lower = -1, upper = 1, steps = 1000):
+    if u <= lower:
+        return 0
+    elif u >= upper:
+        return 1
+    
+    tot = 0.0
+    
+    step_size = (upper - lower) / steps
+
+    x_prev = lower
+    k_prev = function(x_prev)
+
+    for i in range(1, steps + 1):
+        x_curr = lower + i * step_size
+        k_curr = function(x_curr)
+
+        area = (k_prev + k_curr) * step_size / 2
+        tot += area
+
+        x_prev = x_curr
+        k_prev = k_curr
+    
+    return tot
+
+# Creates a list of ordered pairs using the cdf function
+def precompute_cdf(kernel, lower = -1, upper = 1, steps = 1000):
+    u_vals = [lower + i * ((upper - lower) / steps) for i in range(steps + 1)]
+
+    cdfvals = [kernel.cdf(u, function, lower, upper, steps) for u in u_vals]
+    return list.zip(u_vals, cdfvals)
+
+# Uses a list of cdf values
+def invcdf(p, values): # Values can be precomputed using precompute_cdf
+    x, y = zip(*values)
+    if p <= 0:
+        return x[0]
+    elif p >= 1:
+        return x[-1]
+    
+    low, high = 0, len(y) - 1
+    while low < high:
+        mid = (low + high) // 2
+        if y[mid] < p:
+            low = mid + 1
+        else:
+            high = mid
+
+    i = max(1, low)
+
+    x0, x1 = x[i-1], x[i]
+    y0, y1 = y[i-1], y[i]
+    t = (p - y0) / (y1 - y0)
+    
+    return x0 + t * (x1 - x0)
+
+# Returns random noise based on a pdf
+def noise(function, lower, upper, steps = 1000):
+    vals = precompute_cdf(function, lower, upper, steps)
+    p = Random.uniform(0,1)
+
+    return invcdf(p, vals)
+
+# Returns the rising factorial
+def pochhammer(q, n):
+    return prod(q + _ for _ in range(n))
+
+# Returns the hypergeometric series with n steps. more n increases accuracy, but also increases computation time
+def hypergeometric(a, b, c, z, n = 100):
+    return sum(((pochhammer(a, i) * pochhammer(b, i)) / pochhammer(c, i)) * ((z ** i) / factorial(i)) for i in range(n))
+
+# Beta function
+def beta(z1, z2):
+    return (gamma(z1) * gamma(z2)) / gamma(z1 + z2)
+
+# Regularized beta
+def inc_beta(x, a, b):
+    return cdf(x, lambda t: (t ** (a - 1)) * ((1 - t) ** (b - 1)), 0, x)
+
+def reg_beta(x, a, b):
+    return inc_beta(x, a, b) / beta(a, b)
+
 def validateProbability(func):
     def wrapper(p, *args, **kwargs):
         # Handle list or scalar input
@@ -150,6 +233,7 @@ def sample(inputList: list | tuple, n: int, replacement: bool = False):
             tempList[i], tempList[j] = tempList[j], tempList[i] # Puts the jth element in the ith spot. Ends up with n random elements sampled without replacement.
         return(tempList[:n])
 
+# Finds the most common value.
 def mode(data):
     if not data:
         raise ValueError("mode() arg is an empty sequence")
@@ -166,6 +250,7 @@ def mode(data):
             mode_val = val
     return mode_val
 
+# Finds a list of the most occurring values
 def multimode(data):
     counts = {}
     for val in data:
@@ -298,12 +383,96 @@ class dstr:
             phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
             return phi(b) - phi(a)
 
-
     class t:
         def __init__(self, df: float | int):
             self.df = df
+            self.mean = 0
+            self.var = df / (df - 2)
+            self.std = self.variance ** 0.5
+        
+        def kernel(self, x):
+            return (1 + ((x ** 2) / self.df)) ** (-(self.df + 1) / 2)
+        
+        def pdf(self, x):
+            return gamma((self.df + 1) / 2) / (((self.df ** pi) ** 0.5) * gamma(self.df/2))
+        
+        def cdf(self, x, steps):
+            return 1/2 + (x * gamma((self.df + 1) / 2)) * ((hypergeometric(1/2, (self.df + 1) / 2, 3/2, -(x ** 2 / self.df))) / (((self.df ** pi) ** 0.5) * gamma(self.df/2)))
+
+    class cauchy:
+
+        def __init__(self, xnull, gamma):
+            self.xnull = xnull
+            self.gamma = gamma
+            
+        def kernel(self, x):
+            return 1 / (1 + ((x - self.xnull) / self.gamma) ** 2)
+
+        def pdf(self, x):
+            return (1 / (pi * self.gamma)) * self.kernel(x)
+        
+        def cdf(self, x):
+            return (1 / pi * atan(((x - self.xnull) / self.gamma))) + 1 / 2
+        
+    class lognorm:
+
+        def __init__(self, mu, sigma):
+            self.mu = mu
+            self.sigma = sigma
+            self.mean = exp(mu + (sigma ** 2) / 2)
+            self.var = (exp(sigma ** 2) - 1) * exp(2* mu + sigma ** 2)
+            self.std = self.var ** 0.5
+        
+        def kernel(self, x):
+            return exp(-((log(x) - self.mu) ** 2) / (2 * self.sigma ** 2))
+        
+        def pdf(self, x):
+            return (1 / (x * self.sigma * ((2 * pi) ** 0.5))) * self.kernel(x)
+        
+        def cdf(self, x):
+            return phi((log(x) - self.mu) / self.sigma)
+        
+    class pareto:
+
+        def __init__(self, xm, alpha):
+            self.xm = xm
+            self.alpha = alpha
+            if alpha <= 1:
+                self.mean = inf
+            else:
+                self.mean = (alpha * xm) / (alpha - 1)
+            
+            if alpha <= 2:
+                self.var = inf
+                self.std = inf
+            else:
+                self.var = (xm ** 2) / (((alpha - 1) ** 2) * (alpha - 2))
+                self.std = self.var ** 0.5
+        
+        def pdf(self, x):
+            return (self.alpha * self.xm ** self.alpha) / (x ** (self.alpha + 1))
+        
+        def cdf(self, x):
+            return 1 - ((self.xm / x) ** self.alpha)
+        
+    class F:
+
+        def __init__(self, d1, d2):
+            self.d1 = d1
+            self.d2 = d2
+            if d2 > 2:
+                self.mean = d2 / (d2 - 2)
+            if d2 > 4:
+                self.var = ((2 * d2 ** 2) * (d1 + d2 - 2)) / ((d1 * (d2 - 2) ** 2) * (d2 - 4))
+
+        def pdf(self, x):
+            return sqrt(pow(self.d1 * x, self.d1) * pow(self.d2, self.d2) / pow(self.d1 * x + self.d2, self.d1 + self.d2)) / (x * beta(self.d1 / 2, self.d2 / 2))
+
+        def cdf(self, x):
+            return reg_beta((self.d1 * x) / (self.d1 * x + self.d2), self.d1 / 2, self.d2 / 2)
 
     class chisqr:
+
         def __init__(self, obs: list, exp: list = None):
             self.obs = obs
 
@@ -577,73 +746,6 @@ class kernel:
             return pi/4 * cos((pi/2) * u)
         else:
             return 0
-    
-    # Calculation methods for kernels. I imagine they can be used otherwise, to be honest but I couldn't be bothered
-    class calc:
-
-        @staticmethod
-        def cdf(u, function = dstr.normal.kernel, lower = -1, upper = 1, steps = 1000):
-            if u <= lower:
-                return 0
-            elif u >= upper:
-                return 1
-            
-            tot = 0.0
-            
-            step_size = (upper - lower) / steps
-
-            x_prev = lower
-            k_prev = function(x_prev)
-
-            for i in range(1, steps + 1):
-                x_curr = lower + i * step_size
-                k_curr = function(x_curr)
-
-                area = (k_prev + k_curr) * step_size / 2
-                tot += area
-
-                x_prev = x_curr
-                k_prev = k_curr
-            
-            return area
-    
-        @staticmethod
-        def precompute_cdf(kernel, lower = -1, upper = 1, steps = 1000):
-            u_vals = [lower + i * ((upper - lower) / steps) for i in range(steps + 1)]
-
-            cdfvals = [kernel.cdf(u, function, lower, upper, steps) for u in u_vals]
-            return list.zip(u_vals, cdfvals)
-        
-        @staticmethod
-        def invcdf(p, values): # Values can be precomputed using kernel.precompute_cdf
-            x, y = zip(*values)
-            if p <= 0:
-                return x[0]
-            elif p >= 1:
-                return x[-1]
-            
-            low, high = 0, len(y) - 1
-            while low < high:
-                mid = (low + high) // 2
-                if y[mid] < p:
-                    low = mid + 1
-                else:
-                    high = mid
-
-            i = max(1, low)
-
-            x0, x1 = x[i-1], x[i]
-            y0, y1 = y[i-1], y[i]
-            t = (p - y0) / (y1 - y0)
-            
-            return x0 + t * (x1 - x0)
-        
-        @staticmethod
-        def noise(function, lower, upper, steps = 1000):
-            vals = kernel.calc.precompute_cdf(function, lower, upper, steps)
-            p = Random.uniform(0,1)
-
-            return kernel.calc.invcdf(p, vals)
 
 # Regression
 class reg:
