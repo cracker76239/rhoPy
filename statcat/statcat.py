@@ -103,6 +103,18 @@ def inc_beta(x, a, b):
 def reg_beta(x, a, b):
     return inc_beta(x, a, b) / beta(a, b)
 
+def inc_gamma(s, x):
+    return cdf(x, lambda t: (t ** (s - 1)) * exp(-t), 0, x)
+
+def kronkecker_delta(i, j):
+    if i == j:
+        return 1
+    else:
+        return 0
+
+def binomcoeff(n, k):
+    return factorial(n) / (factorial(k) * factorial(n - k))
+
 def validateProbability(func):
     def wrapper(p, *args, **kwargs):
         # Handle list or scalar input
@@ -355,49 +367,55 @@ class outlier:
 # Means and standard deviations of various distribution types.
 class dstr:
 
-    # A.K.A. z distribution
-    class normal:
+    class arcsine:
 
-        def __init__(self, mean: float | int = 0, std: float | int = 1):
-            self.mean = mean
-            self.std = std
-            self.var = std ** 2
-
-        def __add__(dist1, dist2):
-            meanNew = dist1.mean + dist2.mean
-            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
-            return dstr.normal(meanNew, stdNew)
-        
-        def __sub__(dist1, dist2):
-            meanNew = dist1.mean - dist2.mean
-            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
-            return dstr.normal(meanNew, stdNew)
-        
-        def kernel(self, x:float | int):
-            return exp(-((x - self.mean) ** 2) / (2 * self.std ** 2))
-        
-        def pdf(self, x: float | int):
-            return (1 / (2 * pi * self.std ** 2) ** 0.5) * self.kernel(x)
-        
-        def cdf(self, a: float | int, b: float | int):
-            phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
-            return phi(b) - phi(a)
-
-    class t:
-        def __init__(self, df: float | int):
-            self.df = df
-            self.mean = 0
-            self.var = df / (df - 2)
-            self.std = self.variance ** 0.5
+        def __init__(self):
+            self.mean = 1/2
+            self.var = 1/3
+            self.std = 1/3 ** 0.5
         
         def kernel(self, x):
-            return (1 + ((x ** 2) / self.df)) ** (-(self.df + 1) / 2)
-        
+            return 1 / ((x * (1 - x)) ** 0.5)
+
         def pdf(self, x):
-            return gamma((self.df + 1) / 2) / (((self.df ** pi) ** 0.5) * gamma(self.df/2))
+            return (1 / pi) * self.kernel(x)
         
-        def cdf(self, x, steps):
-            return 1/2 + (x * gamma((self.df + 1) / 2)) * ((hypergeometric(1/2, (self.df + 1) / 2, 3/2, -(x ** 2 / self.df))) / (((self.df ** pi) ** 0.5) * gamma(self.df/2)))
+        def cdf(self, x):
+            return (2 / pi) * asin(x ** 0.5)
+
+    class beta:
+
+            def __init__(self, alpha, beta):
+                self.alpha = alpha
+                self.beta = beta
+                self.mean = alpha / (alpha + beta)
+                self.var = (alpha * beta) / (((alpha + beta) ** 2) * (alpha + beta + 1))
+                self.std = self.var ** 0.5
+            
+            def kernel(self, x):
+                return (x ** (self.alpha - 1)) * ((1 - x) ** (self.beta - 1))
+            
+            def pdf(self, x):
+                return (1 / beta(self.alpha, self.beta)) * self.kernel(x)
+            
+            def cdf(self, x):
+                return inc_beta(x, self.alpha, self.beta)
+
+    # Describes the probability of x successes given n attempts and p probability of success.
+    class binom:
+        
+        @validateProbability
+        def __init__(self, p: probability, n: int):
+            self.p = p
+            self.n = n
+
+        # The mean of the probability distribution, A.K.A. the expected amount of successes.
+        def mean(p: probability, n: int):
+            return(n * p)
+            
+        # The standard deviation of the probability distribution.
+        def std(p: probability, n: int):
+            return((n * p * (1 - p)) ** 0.5)
 
     class cauchy:
 
@@ -414,63 +432,6 @@ class dstr:
         def cdf(self, x):
             return (1 / pi * atan(((x - self.xnull) / self.gamma))) + 1 / 2
         
-    class lognorm:
-
-        def __init__(self, mu, sigma):
-            self.mu = mu
-            self.sigma = sigma
-            self.mean = exp(mu + (sigma ** 2) / 2)
-            self.var = (exp(sigma ** 2) - 1) * exp(2* mu + sigma ** 2)
-            self.std = self.var ** 0.5
-        
-        def kernel(self, x):
-            return exp(-((log(x) - self.mu) ** 2) / (2 * self.sigma ** 2))
-        
-        def pdf(self, x):
-            return (1 / (x * self.sigma * ((2 * pi) ** 0.5))) * self.kernel(x)
-        
-        def cdf(self, x):
-            return phi((log(x) - self.mu) / self.sigma)
-        
-    class pareto:
-
-        def __init__(self, xm, alpha):
-            self.xm = xm
-            self.alpha = alpha
-            if alpha <= 1:
-                self.mean = inf
-            else:
-                self.mean = (alpha * xm) / (alpha - 1)
-            
-            if alpha <= 2:
-                self.var = inf
-                self.std = inf
-            else:
-                self.var = (xm ** 2) / (((alpha - 1) ** 2) * (alpha - 2))
-                self.std = self.var ** 0.5
-        
-        def pdf(self, x):
-            return (self.alpha * self.xm ** self.alpha) / (x ** (self.alpha + 1))
-        
-        def cdf(self, x):
-            return 1 - ((self.xm / x) ** self.alpha)
-        
-    class F:
-
-        def __init__(self, d1, d2):
-            self.d1 = d1
-            self.d2 = d2
-            if d2 > 2:
-                self.mean = d2 / (d2 - 2)
-            if d2 > 4:
-                self.var = ((2 * d2 ** 2) * (d1 + d2 - 2)) / ((d1 * (d2 - 2) ** 2) * (d2 - 4))
-
-        def pdf(self, x):
-            return sqrt(pow(self.d1 * x, self.d1) * pow(self.d2, self.d2) / pow(self.d1 * x + self.d2, self.d1 + self.d2)) / (x * beta(self.d1 / 2, self.d2 / 2))
-
-        def cdf(self, x):
-            return reg_beta((self.d1 * x) / (self.d1 * x + self.d2), self.d1 / 2, self.d2 / 2)
-
     class chisqr:
 
         def __init__(self, obs: list, exp: list = None):
@@ -500,7 +461,203 @@ class dstr:
 
             else:
                 raise ValueError("Expected values must be provided for 1D observed data.")
-                
+        
+    class dirichlet:
+
+        def __init__(self, alpha: list):
+            self.K = len(alpha)
+            self.alpha = alpha
+            self.a0 = sum(alpha)
+            self.atilde = [a_i / self.a0 for a_i in alpha]
+            self.mean = [ai / self.a0 for ai in alpha]
+            self.var = [(ai * (1 - ai)) / (self.a0 + 1) for ai in self.atilde]
+            self.std = [v ** 0.5 for v in self.var]
+
+        def kernel(self, x):
+            return prod(xi ** (ai - 1) for xi, ai in zip(x, self.alpha))
+        
+        def pdf(self, x):
+            return self.kernel(x) / prod(gamma(ai) for ai in self.alpha) / gamma(self.a0)
+
+    class F:
+
+        def __init__(self, d1, d2):
+            self.d1 = d1
+            self.d2 = d2
+            if d2 > 2:
+                self.mean = d2 / (d2 - 2)
+            if d2 > 4:
+                self.var = ((2 * d2 ** 2) * (d1 + d2 - 2)) / ((d1 * (d2 - 2) ** 2) * (d2 - 4))
+
+        def pdf(self, x):
+            return sqrt(pow(self.d1 * x, self.d1) * pow(self.d2, self.d2) / pow(self.d1 * x + self.d2, self.d1 + self.d2)) / (x * beta(self.d1 / 2, self.d2 / 2))
+
+        def cdf(self, x):
+            return reg_beta((self.d1 * x) / (self.d1 * x + self.d2), self.d1 / 2, self.d2 / 2)
+
+    class gamma:
+
+        def __init__(self, alpha, theta, *, rate):
+            self.alpha = alpha
+            if rate == None:
+                self.theta = theta
+                self.rate = 1 / theta
+            elif rate or theta != None:
+                raise AttributeError("Input either rate or scale")
+            else:
+                self.rate = rate
+                self.theta = 1 / rate
+            self.mean = alpha * theta
+            self.var = alpha * (theta ** 2)
+            self.std = self.var ** 0.5
+
+        def kernel(self, x):
+            return (x ** (self.alpha - 1)) * exp(-x * self.rate)
+        
+        def pdf(self, x):
+            return (1 / (gamma(self.alpha)) * (self.theta ** self.alpha)) * self.kernel(x)
+        
+        def cdf(self, x):
+            return (inc_gamma(self.alpha, x / self.theta)) / gamma(self.alpha)
+        
+
+    # Describes the probability of taking x amount of attempts to get a success for p probability of success.
+    class geomet:
+        
+        @validateProbability
+        def __init__(self, p: probability):
+            self.p = p
+
+        # The expected amount of attempts for a success.
+        def mean(p: probability):
+            return(1/p)
+        
+        # The standard deviation of the probability distribution.
+        def std(p: probability):
+            return(((1-p) ** 0.5) / p)
+        
+    class irwin_hall:
+        
+        def __init__(self, n):
+            self.n = n
+            self.mean = n / 2
+            self.var = n / 12
+            self.std = self.var ** 0.5
+
+        def kernel(self, x):
+            return sum(pow(-1, k) * binomcoeff(self.n, k) * pow(x - k, self.n - 1) for k in floor(x))
+        
+        def pdf(self, x):
+            return (1 / (factorial(self.n - 1))) * self.kernel(x)
+        
+        def cdf(self, x):
+            return (1 / factorial(self.n)) * sum(pow(-1, k) * binomcoeff(self.n, k) * pow(x - k, self.n) for k in floor(x))
+
+    class lognorm:
+
+        def __init__(self, mu, sigma):
+            self.mu = mu
+            self.sigma = sigma
+            self.mean = exp(mu + (sigma ** 2) / 2)
+            self.var = (exp(sigma ** 2) - 1) * exp(2* mu + sigma ** 2)
+            self.std = self.var ** 0.5
+        
+        def kernel(self, x):
+            return exp(-((log(x) - self.mu) ** 2) / (2 * self.sigma ** 2))
+        
+        def pdf(self, x):
+            return (1 / (x * self.sigma * ((2 * pi) ** 0.5))) * self.kernel(x)
+        
+        def cdf(self, x):
+            phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
+            return phi((log(x) - self.mu) / self.sigma)
+
+    class maxboltz:
+        
+        def __init__(self, a):
+            self.a = a
+            self.mean = 2 * a * ((2 / pi) ** 0.5)
+            self.var = ((a ** 2) * (3 * pi - 8)) / pi
+            self.std = self.var ** 0.5
+        
+        def kernel(self, x):
+            return ((x ** 2) / (self.a ** 3)) * exp((-x ** 2) / (2 * (self.a ** 2)))
+        
+        def pdf(self, x):
+            return ((2 / pi) ** 0.5) * self.kernel(x)
+        
+        def cdf(self, x):
+            return erf(x / (self.a * (2 ** 0.5))) - (((2 / pi) ** 0.5) * (x / self.a) * exp((-x ** 2) / (2 * (self.a ** 3))))
+
+    # A.K.A. z distribution
+    class normal:
+
+        def __init__(self, mean: float | int = 0, std: float | int = 1):
+            self.mean = mean
+            self.std = std
+            self.var = std ** 2
+
+        def __add__(dist1, dist2):
+            meanNew = dist1.mean + dist2.mean
+            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
+            return dstr.normal(meanNew, stdNew)
+        
+        def __sub__(dist1, dist2):
+            meanNew = dist1.mean - dist2.mean
+            stdNew = ((dist1.std ** 2) + (dist2.std ** 2)) ** 0.5
+            return dstr.normal(meanNew, stdNew)
+        
+        def kernel(self, x:float | int):
+            return exp(-((x - self.mean) ** 2) / (2 * self.std ** 2))
+        
+        def pdf(self, x: float | int):
+            return (1 / (2 * pi * self.std ** 2) ** 0.5) * self.kernel(x)
+        
+        def cdf(self, a: float | int, b: float | int):
+            phi = lambda x: 0.5 * (1 + erf((x - self.mean) / (self.std * (2) ** 0.5)))
+            return phi(b) - phi(a)
+
+    class pareto:
+
+        def __init__(self, xm, alpha):
+            self.xm = xm
+            self.alpha = alpha
+            if alpha <= 1:
+                self.mean = inf
+            else:
+                self.mean = (alpha * xm) / (alpha - 1)
+            
+            if alpha <= 2:
+                self.var = inf
+                self.std = inf
+            else:
+                self.var = (xm ** 2) / (((alpha - 1) ** 2) * (alpha - 2))
+                self.std = self.var ** 0.5
+        
+        def pdf(self, x):
+            return (self.alpha * self.xm ** self.alpha) / (x ** (self.alpha + 1))
+        
+        def cdf(self, x):
+            return 1 - ((self.xm / x) ** self.alpha)
+
+    class t:
+        def __init__(self, df: float | int):
+            self.df = df
+            self.mean = 0
+            self.var = df / (df - 2)
+            self.std = self.variance ** 0.5
+        
+        def kernel(self, x):
+            return (1 + ((x ** 2) / self.df)) ** (-(self.df + 1) / 2)
+        
+        def pdf(self, x):
+            return gamma((self.df + 1) / 2) / (((self.df ** pi) ** 0.5) * gamma(self.df/2))
+        
+        def cdf(self, x, steps):
+            return 1/2 + (x * gamma((self.df + 1) / 2)) * ((hypergeometric(1/2, (self.df + 1) / 2, 3/2, -(x ** 2 / self.df))) / (((self.df ** pi) ** 0.5) * gamma(self.df/2)))
+
+    # I was gonna put the Wishart distribution here but it frightens me
+          
     class sampling:
         
         # The sampling distribution of the sample proportion
@@ -651,37 +808,6 @@ class dstr:
                     samples.append(xi + bandwidth * u)
 
                 return samples
-                    
-    # Describes the probability of x successes given n attempts and p probability of success.
-    class binom:
-        
-        @validateProbability
-        def __init__(self, p: probability, n: int):
-            self.p = p
-            self.n = n
-
-        # The mean of the probability distribution, A.K.A. the expected amount of successes.
-        def mean(p: probability, n: int):
-            return(n * p)
-            
-        # The standard deviation of the probability distribution.
-        def std(p: probability, n: int):
-            return((n * p * (1 - p)) ** 0.5)
-    
-    # Describes the probability of taking x amount of attempts to get a success for p probability of success.
-    class geomet:
-        
-        @validateProbability
-        def __init__(self, p: probability):
-            self.p = p
-
-        # The expected amount of attempts for a success.
-        def mean(p: probability):
-            return(1/p)
-        
-        # The standard deviation of the probability distribution.
-        def std(p: probability):
-            return(((1-p) ** 0.5) / p)
             
 # kernels are sick
 class kernel:
