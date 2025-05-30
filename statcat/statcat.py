@@ -47,15 +47,23 @@ def cdf(u, function, lower = -1, upper = 1, steps = 1000):
     return tot
 
 # Creates a list of ordered pairs using the cdf function
-def precompute_cdf(kernel, lower = -1, upper = 1, steps = 1000):
+def precomp_cdf(function, cdf : bool = True, lower = -1, upper = 1, steps = 1000):
     u_vals = [lower + i * ((upper - lower) / steps) for i in range(steps + 1)]
-
-    cdfvals = [kernel.cdf(u, function, lower, upper, steps) for u in u_vals]
+    if cdf == true:
+        cdfvals = [function(u) for u in u_vals]
+    else:
+        cdfvals = [cdf(u, function, lower, upper, steps) for u in u_vals]
     return list.zip(u_vals, cdfvals)
 
-# Uses a list of cdf values
-def invcdf(p, values): # Values can be precomputed using precompute_cdf
-    x, y = zip(*values)
+# The inverse of the cdf function
+def invcdf(p, function, cdf : bool = True):
+    u_vals = [lower + i * ((upper - lower) / steps) for i in range(steps + 1)]
+    if cdf == True:
+        cdfvals = [function(u) for u in u_vals]
+    else:
+        cdfvals = [cdf(u, function, lower, upper, steps) for u in u_vals]
+    
+    x, y = u_vals, cdf_vals
     if p <= 0:
         return x[0]
     elif p >= 1:
@@ -77,12 +85,9 @@ def invcdf(p, values): # Values can be precomputed using precompute_cdf
     
     return x0 + t * (x1 - x0)
 
-# Returns random noise based on a pdf
-def noise(function, lower, upper, steps = 1000):
-    vals = precompute_cdf(function, lower, upper, steps)
-    p = Random.uniform(0,1)
-
-    return invcdf(p, vals)
+# Returns random noise based on a function
+def noise(function, cdf : bool = True, n : Int = 1):
+    return [invcdf(Random.uniform(0,1), function, cdf) for n in n
 
 # Returns the rising factorial
 def pochhammer(q, n):
@@ -96,13 +101,15 @@ def hypergeometric(a, b, c, z, n = 100):
 def beta(z1, z2):
     return (gamma(z1) * gamma(z2)) / gamma(z1 + z2)
 
-# Regularized beta
+# Incomplete beta function
 def inc_beta(x, a, b):
     return cdf(x, lambda t: (t ** (a - 1)) * ((1 - t) ** (b - 1)), 0, x)
 
+# Refularized beta function
 def reg_beta(x, a, b):
     return inc_beta(x, a, b) / beta(a, b)
 
+# Incomplete gamma function
 def inc_gamma(s, x):
     return cdf(x, lambda t: (t ** (s - 1)) * exp(-t), 0, x)
 
@@ -214,7 +221,7 @@ def variance(inputList: list | tuple, isSample: bool = False):
         else:
             return (tempVariance / n)    
     
-# Input a list or tuple and whether or not it is a sample (if no input is given, it will be treated as a population), and return the standard deviation of the list.
+# Returns the standard deviation of the list.
 def std(inputList, isSample : bool = False):
         return(variance(inputList, isSample) ** 0.5)
 
@@ -222,7 +229,7 @@ def std(inputList, isSample : bool = False):
 def zScore(value, mean, std):
     return((value - mean) / std)
 
-# Input a list or tuple, and return a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
+# Returns a list of the z-scores of every value of the list. If an index is given, it will return the z-score of the given index.
 def standardize(inputList: list | tuple, index: int = None, sample: bool = False):
     inputMean = mean(inputList)
     inputStd = std(inputList, sample)
@@ -285,7 +292,6 @@ def median(inputList: list | tuple):
         return sortedList[length // 2]
 
 # Returns the median quickly using the quickselect algorithm.
-# Best case: O(n) Worst case: O(n^2)
 def quickMedian(inputList: list | tuple):
     length = len(inputList)
     if length % 2 == 0:
@@ -326,7 +332,6 @@ def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
 
     return median
 
-# Low Median: Median of the lower half of the sorted list
 def Q1(inputList: list | tuple):
     sortedList = sorted(inputList)
     mid = len(sortedList) // 2
@@ -336,7 +341,6 @@ def Q1(inputList: list | tuple):
     
     return median(lower_half)
 
-# High Median: Median of the upper half of the sorted list
 def Q3(inputList: list | tuple):
     sortedList = sorted(inputList)
     mid = len(sortedList) // 2
@@ -364,7 +368,6 @@ class outlier:
     def test(inputList: list | tuple):
         return sorted((outlier.IQR(inputList)) + (outlier.sigma(inputList)))
 
-# Means and standard deviations of various distribution types.
 class dstr:
 
     class arcsine:
@@ -727,7 +730,7 @@ class dstr:
                     new_norm = False
                 return dstr.sampling.mean(new_mean,new_std,None,new_norm)
             
-            def sub(dist1,dist2):
+            def __sub__(dist1,dist2):
                 new_mean = dist1.mean - dist2.mean
                 new_std = (((dist1.std ** 2) / dist1.n) + (dist2.std ** 2) / dist2.n) ** 0.5
                 if (dist1.norm == True) and (dist2.norm == True):
@@ -752,9 +755,9 @@ class dstr:
         # I'm gonna try my best.
         class kde:
 
-            def __init__(self, data, h, kernel = None ): # None turns into dstr.normal().kernel at runtime
+            def __init__(self, data, h = 'scott', kernel = None ): # None turns into dstr.normal().kernel at runtime
                 self.data = data
-                self.n = len(self.data)
+                self.ndata = len(self.data)
                 if isinstance(h, str):
                     if h == 'scott':
                         std = std(data)
@@ -800,11 +803,10 @@ class dstr:
             def random(self, n = 1):
                 bandwidth = self.h * std(self.data)
                 samples = []
-                ndata = len(self.data)
 
                 for _ in range(n):
                     xi = sample(self.data, 1)
-                    u = kernel.calc.noise()
+                    u = noise()
                     samples.append(xi + bandwidth * u)
 
                 return samples
@@ -879,10 +881,14 @@ class reg:
     # Linear
     class lin:
 
-        def __init__(self, xdata, ydata):
-            self.xdata = xdata
-            self.ydata = ydata
-            self.data = [(x,y) for x, y in zip(xdata,ydata)] 
+        def __init__(self, xdata, ydata, *, data):
+            if data != None:
+                self.data = data
+                self.xdata, self.ydata = zip(*data)
+            else:
+                self.xdata = xdata
+                self.ydata = ydata
+                self.data = [(x,y) for x, y in zip(xdata,ydata)] 
             self._compute_stats()
 
         def _compute_stats(self):
@@ -897,6 +903,6 @@ class reg:
             self.r = self.rsq ** 0.5
             self.s = sum([y ** 2 for y in self.ydev]) / (len(self.data) - 2)
 
-        def eq(self, x):
+        def eq(self, x):[
             return self.a + self.b * x
 
