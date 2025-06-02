@@ -113,6 +113,9 @@ def reg_beta(x, a, b):
 def inc_gamma(s, x):
     return cdf(x, lambda t: (t ** (s - 1)) * exp(-t), 0, x)
 
+def multivar_gamma(a, p)
+    return (pi ** (p * (p - 1)) / 4) * prod(gamma(a - ((j - 1) / 2)) for j in p)
+
 def kronkecker_delta(i, j):
     if i == j:
         return 1
@@ -331,6 +334,13 @@ def grouped_median(classIntervals: list[tuple | list], frequencies: list[int]):
     median = L + ((half - F) / fm) * h
 
     return median
+    
+def entropy(function)
+    for x
+    return
+    
+def cross_entropy(func1, func2)
+    
 
 def Q1(inputList: list | tuple):
     sortedList = sorted(inputList)
@@ -659,7 +669,15 @@ class dstr:
         def cdf(self, x, steps):
             return 1/2 + (x * gamma((self.df + 1) / 2)) * ((hypergeometric(1/2, (self.df + 1) / 2, 3/2, -(x ** 2 / self.df))) / (((self.df ** pi) ** 0.5) * gamma(self.df/2)))
 
-    # I was gonna put the Wishart distribution here but it frightens me
+    class wishart:
+        
+        def __init__(self, S, V, n : int)
+            self.mean = __ # Plaeholder
+            self.var = __ # "
+            self.std = __ # "
+            
+        def pdf(self, x)
+            
           
     class sampling:
         
